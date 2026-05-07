@@ -113,7 +113,7 @@ public class Inventory : MonoBehaviour
 
     int GetStackLimit(string itemName)
     {
-        if (itemName == "5.56x18mm") return 30;
+        if (itemName == "9x18mm") return 30;
         return 1;
     }
 
@@ -130,7 +130,24 @@ public class Inventory : MonoBehaviour
             UpdateInventoryUI();
             Debug.Log("回復した");
         }
+        else if (itemName == "BeefCan")
+        {
+            itemManager.PickupFood(30);
+            items[itemName]--;
+            if (items[itemName] <= 0)
+                items.Remove(itemName);
+            UpdateInventoryUI();
+        }
+        else if (itemName == "Water")
+        {
+            itemManager.PickupWater(30);
+            items[itemName]--;
+            if (items[itemName] <= 0)
+                items.Remove(itemName);
+            UpdateInventoryUI();
+        }
     }
+
 
     public bool HasItem(string itemName)
     {

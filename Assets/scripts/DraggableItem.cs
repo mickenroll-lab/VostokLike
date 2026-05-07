@@ -54,11 +54,10 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        Debug.Log("OnEndDrag呼ばれた");
         if (dragGhost != null)
-        {
             dragGhost.SetActive(false);
-            Debug.Log("ゴースト非表示にした：" + dragGhost.activeSelf);
-        }
         canvasGroup.blocksRaycasts = true;
+        Destroy(gameObject);
     }
 }

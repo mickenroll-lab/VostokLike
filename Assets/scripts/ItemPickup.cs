@@ -51,12 +51,8 @@ public class ItemPickup : MonoBehaviour
 
                     if (data.category == ItemData.ItemCategory.Weapon)
                     {
-                        item.transform.SetParent(hand);
-                        item.transform.localPosition = Vector3.zero;
-                        item.transform.localRotation = Quaternion.identity;
-                        item.GetComponent<Collider>().enabled = false;
-                        state.currentItem = data.itemType;
-                        Debug.Log("ëïîıÅF" + state.currentItem);
+                        inventory.AddItem(data.itemType);
+                        Destroy(item);
                     }
                     else if (data.category == ItemData.ItemCategory.Consumable)
                     {

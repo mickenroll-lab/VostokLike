@@ -3,8 +3,13 @@ using TMPro;
 
 public class HUDManager : MonoBehaviour
 {
+    public TextMeshProUGUI hpText; 
+    public TextMeshProUGUI staminaText;
+    public TextMeshProUGUI hungerText;
+    public TextMeshProUGUI thirstText;
+
     public TextMeshProUGUI itemText;
-    public TextMeshProUGUI hpText;
+    
     public TextMeshProUGUI interactText;
     private PlayerState playerState;
 
@@ -24,15 +29,22 @@ public class HUDManager : MonoBehaviour
         if (inventory != null && inventory.inventoryPanel.activeSelf)
         {
             interactText.text = "";
-            return;
+        }
+        else
+        {
+            if (playerState.currentItem == "")
+                itemText.text = "Empty";
+            else
+                itemText.text = "Item: " + playerState.currentItem;
         }
 
-        if (playerState.currentItem == "")
-            itemText.text = "Empty";
-        else
-            itemText.text = "Item: " + playerState.currentItem;
-
-        hpText.text = "HP: " + playerState.hp;
+        hpText.text = " " + playerState.hp;
+        staminaText.text = " " + (int)playerState.stamina;
+        staminaText.color = playerState.stamina < 30f ? Color.red : Color.white;
+        hungerText.text = " " + (int)playerState.hunger;
+        hungerText.color = playerState.hunger < 30f ? Color.red : Color.white;
+        thirstText.text = " " + (int)playerState.thirst;
+        thirstText.color = playerState.thirst < 30f ? Color.red : Color.white;
     }
 
     public void ShowInteractText(string name)

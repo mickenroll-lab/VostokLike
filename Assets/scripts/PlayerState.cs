@@ -5,6 +5,17 @@ using UnityEngine.UI;
 
 public class PlayerState : MonoBehaviour
 {
+    public float stamina = 100f;
+    public float hunger = 100f;
+    public float thirst = 100f;
+
+    public float staminaMax = 100f;
+    public float hungerMax = 100f;
+    public float thirstMax = 100f;
+
+    public float hungerDecayRate = 0.1f;  // 1•b‚ ‚½‚è‚ÌŒ¸­—Ê
+    public float thirstDecayRate = 0.15f; 
+    
     public string currentItem = "";
     public int hp = 100;
     public GameObject deathPanel;
@@ -19,7 +30,21 @@ public class PlayerState : MonoBehaviour
             Die();
         }
     }
+    void Update()
+    {
+        // ‹Q‚¦‚ÆŠ‰‚«‚ÍŠÔ‚ÅŒ¸­
+        hunger -= hungerDecayRate * Time.deltaTime;
+        thirst -= thirstDecayRate * Time.deltaTime;
 
+        hunger = Mathf.Clamp(hunger, 0, hungerMax);
+        thirst = Mathf.Clamp(thirst, 0, thirstMax);
+
+        // 0‚É‚È‚Á‚½‚çƒ_ƒ[ƒW
+        if (hunger <= 0)
+            TakeDamage(1);
+        if (thirst <= 0)
+            TakeDamage(2);
+    }
     void Die()
     {
         deathPanel.SetActive(true);

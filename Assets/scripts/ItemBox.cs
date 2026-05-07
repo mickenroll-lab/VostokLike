@@ -7,7 +7,7 @@ public class ItemBox : MonoBehaviour
 
     void Start()
     {
-        contents["5.56x18mm"] = 30;
+        contents["9x18mm"] = 30;
         contents["MedKit"] = 1;
     }
 }
