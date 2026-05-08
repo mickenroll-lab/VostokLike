@@ -13,11 +13,13 @@ public class MouseLook : MonoBehaviour
 
     void Update()
     {
-        Inventory inventory = playerBody.GetComponent<Inventory>();
         PlayerState playerState = playerBody.GetComponent<PlayerState>();
+        Inventory inventory = playerBody.GetComponent<Inventory>();
+        ResultManager resultManager = FindObjectOfType<ResultManager>();
 
         if ((inventory != null && inventory.inventoryPanel.activeSelf) ||
-            (playerState != null && playerState.deathPanel.activeSelf))
+            (playerState != null && playerState.deathPanel.activeSelf) ||
+            (resultManager != null && resultManager.resultPanel.activeSelf))
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;

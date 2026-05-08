@@ -17,14 +17,21 @@ public class SpawnManager : MonoBehaviour
 
     public void SpawnAtSafe()
     {
+        Debug.Log("SpawnAtSafe実行 player：" + player.GetInstanceID());
         CharacterController cc = player.GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
         player.transform.position = spawnPointSafe.position;
         player.transform.rotation = spawnPointSafe.rotation;
         if (cc != null) cc.enabled = true;
+        Debug.Log("移動後position：" + player.transform.position);
     }
     void Start()
     {
-        SpawnAtSafe(); // デフォルトはセーフゾーン内スタート
+        if (player == null)
+            player = GameObject.FindWithTag("Player");
+
+        Debug.Log("SpawnManager Start player：" + player);
+        SpawnAtSafe();
+        Debug.Log("SpawnAtSafe呼んだ position：" + spawnPointSafe.position);
     }
 }

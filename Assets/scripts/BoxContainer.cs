@@ -28,6 +28,19 @@ public class BoxContainer : MonoBehaviour
     private Dictionary<string, int> boxContents = new Dictionary<string, int>();
     private ItemBox currentBox;
 
+
+    public void MoveAllToPlayer(string itemName)
+    {
+        if (!boxContents.ContainsKey(itemName)) return;
+        int count = boxContents[itemName];
+        for (int i = 0; i < count; i++)
+            playerInventory.AddItem(itemName);
+        boxContents.Remove(itemName);
+        if (currentBox != null && currentBox.contents.ContainsKey(itemName))
+            currentBox.contents.Remove(itemName);
+        UpdateBoxUI();
+        playerInventory.UpdateInventoryUI();
+    }
     public void OpenBox(Dictionary<string, int> contents, ItemBox box)
     {
         currentBox = box;
@@ -71,67 +84,86 @@ public class BoxContainer : MonoBehaviour
             Destroy(child.gameObject);
 
         int totalCells = gridWidth * gridHeight;
-        int itemIndex = 0;
+        int cellIndex = 0;
         List<string> keys = new List<string>(boxContents.Keys);
 
-        for (int i = 0; i < totalCells; i++)
+        foreach (string itemName in keys)
         {
-            GameObject cell = Instantiate(gridCellPrefab, boxGridParent);
-            Image cellImage = cell.GetComponent<Image>();
+            if (cellIndex >= totalCells) break;
 
-            if (itemIndex < keys.Count)
+            int count = boxContents[itemName];
+            bool isAmmo = itemName == "9x18mm";
+
+            if (isAmmo)
             {
-                string itemName = keys[itemIndex];
-                int count = boxContents[itemName];
-
-                cellImage.color = new Color(0.3f, 0.4f, 0.5f, 0.8f);
-                TextMeshProUGUI text = cell.GetComponentInChildren<TextMeshProUGUI>();
-                if (text != null)
-                {
-                    text.text = count > 1 ? count.ToString() : "";
-                    text.fontSize = 28;
-                    text.alignment = TextAlignmentOptions.BottomRight;
-                }
-
-                string captured = itemName;
-                Button btn = cell.GetComponent<Button>();
-                btn.onClick.AddListener(() => MoveToPlayer(captured, Input.GetKey(KeyCode.LeftShift)));
-
-                string tooltipName = itemName;
-                EventTrigger trigger = cell.AddComponent<EventTrigger>();
-
-                EventTrigger.Entry enterEntry = new EventTrigger.Entry();
-                enterEntry.eventID = EventTriggerType.PointerEnter;
-                enterEntry.callback.AddListener((data) => {
-                    if (tooltipText != null) tooltipText.gameObject.SetActive(true);
-                    if (tooltipText != null) tooltipText.text = tooltipName;
-                });
-                trigger.triggers.Add(enterEntry);
-
-                EventTrigger.Entry exitEntry = new EventTrigger.Entry();
-                exitEntry.eventID = EventTriggerType.PointerExit;
-                exitEntry.callback.AddListener((data) => {
-                    if (tooltipText != null) tooltipText.gameObject.SetActive(false);
-                });
-                trigger.triggers.Add(exitEntry);
-
-                // DraggableItemをアタッチ
-                DraggableItem draggable = cell.AddComponent<DraggableItem>();
-                draggable.itemName = itemName;
-                draggable.fromInventory = false;
-                draggable.inventory = playerInventory;
-                draggable.boxContainer = this;
-                draggable.dragGhost = dragGhostObject; // ← 追加
-
-                itemIndex++;
+                // 弾薬はスタック表示（1セル）
+                CreateCell(itemName, count, true, ref cellIndex);
             }
             else
             {
-                cellImage.color = new Color(0.1f, 0.1f, 0.1f, 0.5f);
+                // それ以外は個別表示
+                for (int j = 0; j < count; j++)
+                {
+                    if (cellIndex >= totalCells) break;
+                    CreateCell(itemName, 1, false, ref cellIndex);
+                }
             }
+        }
+
+        // 残りの空セルを埋める
+        while (cellIndex < totalCells)
+        {
+            GameObject cell = Instantiate(gridCellPrefab, boxGridParent);
+            cell.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.1f, 0.5f);
+            cellIndex++;
         }
     }
 
+    void CreateCell(string itemName, int displayCount, bool isAmmo, ref int cellIndex)
+    {
+        GameObject cell = Instantiate(gridCellPrefab, boxGridParent);
+        Image cellImage = cell.GetComponent<Image>();
+        cellImage.color = new Color(0.3f, 0.4f, 0.5f, 0.8f);
+
+        TextMeshProUGUI text = cell.GetComponentInChildren<TextMeshProUGUI>();
+        if (text != null)
+        {
+            text.text = isAmmo && displayCount > 1 ? displayCount.ToString() : "";
+            text.fontSize = 28;
+            text.alignment = TextAlignmentOptions.BottomRight;
+        }
+
+        string captured = itemName;
+        Button btn = cell.GetComponent<Button>();
+        btn.onClick.AddListener(() => MoveToPlayer(captured, Input.GetKey(KeyCode.LeftShift)));
+
+        string tooltipName = itemName;
+        EventTrigger trigger = cell.AddComponent<EventTrigger>();
+
+        EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+        enterEntry.eventID = EventTriggerType.PointerEnter;
+        enterEntry.callback.AddListener((data) => {
+            if (tooltipText != null) tooltipText.gameObject.SetActive(true);
+            if (tooltipText != null) tooltipText.text = tooltipName;
+        });
+        trigger.triggers.Add(enterEntry);
+
+        EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+        exitEntry.eventID = EventTriggerType.PointerExit;
+        exitEntry.callback.AddListener((data) => {
+            if (tooltipText != null) tooltipText.gameObject.SetActive(false);
+        });
+        trigger.triggers.Add(exitEntry);
+
+        DraggableItem draggable = cell.AddComponent<DraggableItem>();
+        draggable.itemName = itemName;
+        draggable.fromInventory = false;
+        draggable.inventory = playerInventory;
+        draggable.boxContainer = this;
+        draggable.dragGhost = dragGhostObject;
+
+        cellIndex++;
+    }
     void MoveToPlayer(string itemName, bool moveAll)
     {
         int amount = moveAll ? boxContents[itemName] : 1;

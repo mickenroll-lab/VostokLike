@@ -122,6 +122,9 @@ MonoBehaviour:
   itemType: PMP
   category: 0
   amount: 1
+  value: 500
+  gridWidth: 2
+  gridHeight: 1
 --- !u!114 &5764931272778961703
 MonoBehaviour:
   m_ObjectHideFlags: 0

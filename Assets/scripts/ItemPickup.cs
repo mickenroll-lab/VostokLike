@@ -51,12 +51,12 @@ public class ItemPickup : MonoBehaviour
 
                     if (data.category == ItemData.ItemCategory.Weapon)
                     {
-                        inventory.AddItem(data.itemType);
+                        inventory.AddItem(data.itemType, data.gridWidth, data.gridHeight, 1, data.value);
                         Destroy(item);
                     }
                     else if (data.category == ItemData.ItemCategory.Consumable)
                     {
-                        inventory.AddItem(data.itemType);
+                        inventory.AddItem(data.itemType, data.gridWidth, data.gridHeight, data.amount, data.value);
                         Destroy(item);
                     }
                 }

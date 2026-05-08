@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
-  m_Name: ShareTechMono-Regular SDF
+  m_Name: StateShareTechMono-Regular SDF 1
   m_EditorClassIdentifier: 
-  hashCode: 911641234
+  hashCode: 593848436
   material: {fileID: 8360344723877504811}
-  materialHashCode: -1419221006
+  materialHashCode: -601020076
   m_Version: 1.1.0
   m_SourceFontFileGUID: 9bc2f64e33dc7d94e949dae5e6b797f8
   m_SourceFontFile_EditorRef: {fileID: 12800000, guid: 9bc2f64e33dc7d94e949dae5e6b797f8, type: 3}
@@ -2683,7 +2683,7 @@ Material:
     - _OutlineSoftness: 0
     - _OutlineUVSpeedX: 0
     - _OutlineUVSpeedY: 0
-    - _OutlineWidth: 0.613
+    - _OutlineWidth: 0.32
     - _PerspectiveFilter: 0.875
     - _Reflectivity: 10
     - _ScaleRatioA: 0.8333333

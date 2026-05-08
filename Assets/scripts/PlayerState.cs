@@ -30,6 +30,17 @@ public class PlayerState : MonoBehaviour
             Die();
         }
     }
+    void Start()
+    {
+        // Šù‚É‘¶İ‚·‚éê‡‚Í©•ª‚ğíœ
+        PlayerState[] players = FindObjectsOfType<PlayerState>();
+        if (players.Length > 1)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        DontDestroyOnLoad(gameObject);
+    }
     void Update()
     {
         // ‹Q‚¦‚ÆŠ‰‚«‚ÍŠÔ‚ÅŒ¸­

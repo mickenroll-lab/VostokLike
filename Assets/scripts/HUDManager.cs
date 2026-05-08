@@ -15,8 +15,14 @@ public class HUDManager : MonoBehaviour
 
     void Start()
     {
+        HUDManager[] managers = FindObjectsOfType<HUDManager>();
+        if (managers.Length > 1)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        DontDestroyOnLoad(gameObject);
         playerState = FindObjectOfType<PlayerState>();
-        
         interactText.text = "";
     }
 

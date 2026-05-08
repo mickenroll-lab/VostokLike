@@ -5,7 +5,7 @@ using TMPro;
 
 public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public string itemName;
+    public string itemName; // itemId‚ðŠi”[
     public bool fromInventory;
     public Inventory inventory;
     public BoxContainer boxContainer;
@@ -24,12 +24,7 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        Debug.Log("OnBeginDragŒÄ‚Î‚ê‚½");
-        if (dragGhost == null)
-        {
-            Debug.Log("dragGhost‚ªnull");
-            return;
-        }
+        if (dragGhost == null) return;
 
         ghostImage = dragGhost.GetComponent<Image>();
         ghostText = dragGhost.GetComponentInChildren<TextMeshProUGUI>();
@@ -54,10 +49,9 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        Debug.Log("OnEndDragŒÄ‚Î‚ê‚½");
         if (dragGhost != null)
             dragGhost.SetActive(false);
         canvasGroup.blocksRaycasts = true;
-        Destroy(gameObject);
+        Debug.Log("OnEndDragŒÄ‚Î‚ê‚½");
     }
 }
