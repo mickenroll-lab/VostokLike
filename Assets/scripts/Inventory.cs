@@ -24,6 +24,15 @@ public class Inventory : MonoBehaviour
             boxContainer.AddToBox(itemName, 1);
             RemoveItem(itemName);
         }
+
+        // inventoryItemsからも削除
+        InventoryItem invItem = inventoryItems.Find(i => i.itemName == itemName);
+        if (invItem != null)
+        {
+            inventoryGrid.RemoveItem(invItem.itemId);
+            inventoryItems.Remove(invItem);
+        }
+
         UpdateInventoryUI();
         boxContainer.UpdateBoxUI();
     }
@@ -129,7 +138,34 @@ public class Inventory : MonoBehaviour
         }
         Debug.Log("アイテム追加：" + itemName);
     }
+    public void AddItem(string itemName, int w, int h)
+    {
+        // 既存のDictionary処理
+        int stackLimit = GetStackLimit(itemName);
+        if (items.ContainsKey(itemName) && items[itemName] < stackLimit)
+            items[itemName]++;
+        else if (!items.ContainsKey(itemName))
+            items[itemName] = 1;
+        else
+        {
+            string key = itemName + "_2";
+            if (items.ContainsKey(key) && items[key] < stackLimit)
+                items[key]++;
+            else
+                items[key] = 1;
+        }
 
+        // inventoryItemsにサイズ付きで追加
+        int foundX, foundY;
+        if (inventoryGrid.FindFreeSpace(w, h, out foundX, out foundY))
+        {
+            InventoryItem newItem = new InventoryItem(itemName, foundX, foundY, w, h);
+            inventoryItems.Add(newItem);
+            inventoryGrid.PlaceItem(newItem.itemId, foundX, foundY, w, h);
+        }
+
+        UpdateInventoryUI();
+    }
     int GetStackLimit(string itemName)
     {
         if (itemName == "9x18mm") return 30;
@@ -209,84 +245,106 @@ public class Inventory : MonoBehaviour
 
     public void UpdateInventoryUI()
     {
-        foreach (Transform child in gridParent)
-            Destroy(child.gameObject);
+        for (int i = gridParent.childCount - 1; i >= 0; i--)
+            DestroyImmediate(gridParent.GetChild(i).gameObject);
 
         int totalCells = gridWidth * gridHeight;
-        int itemIndex = 0;
 
-        List<string> itemKeys = new List<string>(items.Keys);
-
+        // 空セルを先に全部生成
         for (int i = 0; i < totalCells; i++)
         {
             GameObject cell = Instantiate(gridCellPrefab, gridParent);
-            Image cellImage = cell.GetComponent<Image>();
+            cell.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.1f, 0.5f);
+        }
 
-            if (itemIndex < itemKeys.Count)
+        // inventoryItemsから表示
+        foreach (InventoryItem item in inventoryItems)
+        {
+            // 複数セルにわたって色を付ける
+            for (int dx = 0; dx < item.gridWidth; dx++)
             {
-                string itemName = itemKeys[itemIndex];
-                int count = items[itemName];
-
-                cellImage.color = new Color(0.3f, 0.5f, 0.3f, 0.8f);
-                TextMeshProUGUI text = cell.GetComponentInChildren<TextMeshProUGUI>();
-                if (text != null)
+                for (int dy = 0; dy < item.gridHeight; dy++)
                 {
-                    text.text = count > 1 ? count.ToString() : "";
-                    text.fontSize = 28;
-                    text.alignment = TextAlignmentOptions.BottomRight;
+                    int cellX = item.gridX + dx;
+                    int cellY = item.gridY + dy;
+                    if (cellX >= gridWidth || cellY >= gridHeight) continue;
+
+                    int cellIndex = cellY * gridWidth + cellX;
+                    if (cellIndex >= gridParent.childCount) continue;
+
+                    GameObject itemCell = gridParent.GetChild(cellIndex).gameObject;
+                    itemCell.GetComponent<Image>().color = new Color(0.3f, 0.5f, 0.3f, 0.8f);
+
+                        // メインセル（左上）にのみUI要素を追加
+                        if (dx == 0 && dy == 0)
+
+                        // メインセル以外にもDraggableItemをアタッチ
+                        if (dx != 0 || dy != 0)
+                        {
+                            DraggableItem draggable = itemCell.AddComponent<DraggableItem>();
+                            draggable.itemName = item.itemName;
+                            draggable.fromInventory = true;
+                            draggable.inventory = this;
+                            draggable.boxContainer = boxContainer;
+                            draggable.dragGhost = dragGhostObject;
+                        }
+                    {
+                        TextMeshProUGUI text = itemCell.GetComponentInChildren<TextMeshProUGUI>();
+                        if (text != null)
+                        {
+                            text.text = item.itemName == "9x18mm" && item.amount > 1 ? item.amount.ToString() : "";
+                            text.fontSize = 28;
+                            text.alignment = TextAlignmentOptions.BottomRight;
+                        }
+
+                        string captured = item.itemName;
+                        itemCell.GetComponent<Button>().onClick.AddListener(() => {
+                            if (Input.GetKey(KeyCode.LeftShift))
+                                MoveToBox(captured, true);
+                            else
+                                UseItem(captured);
+                        });
+
+                        string tooltipName = item.itemName;
+                        EventTrigger trigger = itemCell.AddComponent<EventTrigger>();
+
+                        EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+                        enterEntry.eventID = EventTriggerType.PointerEnter;
+                        enterEntry.callback.AddListener((data) => {
+                            tooltipText.gameObject.SetActive(true);
+                            tooltipText.text = tooltipName;
+                        });
+                        trigger.triggers.Add(enterEntry);
+
+                        EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+                        exitEntry.eventID = EventTriggerType.PointerExit;
+                        exitEntry.callback.AddListener((data) => {
+                            tooltipText.gameObject.SetActive(false);
+                        });
+                        trigger.triggers.Add(exitEntry);
+
+                        DraggableItem draggable = itemCell.AddComponent<DraggableItem>();
+                        draggable.itemName = item.itemName;
+                        draggable.fromInventory = true;
+                        draggable.inventory = this;
+                        draggable.boxContainer = boxContainer;
+                        draggable.dragGhost = dragGhostObject;
+                    }
                 }
-
-                string captured = itemName;
-                cell.GetComponent<Button>().onClick.AddListener(() => {
-                    if (Input.GetKey(KeyCode.LeftShift))
-                        MoveToBox(captured, true);
-                    else
-                        UseItem(captured);
-                });
-                // DraggableItemをアタッチ
-                DraggableItem draggable = cell.AddComponent<DraggableItem>();
-                draggable.itemName = itemName;
-                draggable.fromInventory = true;
-                draggable.inventory = this;
-                draggable.boxContainer = boxContainer;
-                draggable.dragGhost = dragGhostObject; // ← これが入っているか
-                itemIndex++;
-                // マウスオーバーでツールチップ表示
-                string tooltipName = itemName;
-                EventTrigger trigger = cell.AddComponent<EventTrigger>();
-
-                EventTrigger.Entry enterEntry = new EventTrigger.Entry();
-                enterEntry.eventID = EventTriggerType.PointerEnter;
-                enterEntry.callback.AddListener((data) => {
-                    tooltipText.gameObject.SetActive(true);
-                    tooltipText.text = tooltipName;
-                });
-                trigger.triggers.Add(enterEntry);
-
-                EventTrigger.Entry exitEntry = new EventTrigger.Entry();
-                exitEntry.eventID = EventTriggerType.PointerExit;
-                exitEntry.callback.AddListener((data) => {
-                    tooltipText.gameObject.SetActive(false);
-                });
-                trigger.triggers.Add(exitEntry);
-            }
-            else
-            {
-                cellImage.color = new Color(0.1f, 0.1f, 0.1f, 0.5f);
             }
         }
     }
     public int CalculateTotalValue()
     {
         int total = 0;
-        foreach (var item in items)
+        foreach (var item in inventoryItems)
         {
-            GameObject prefab = Resources.Load<GameObject>(item.Key);
+            GameObject prefab = Resources.Load<GameObject>(item.itemName);
             if (prefab != null)
             {
                 ItemData data = prefab.GetComponent<ItemData>();
                 if (data != null)
-                    total += data.value * item.Value;
+                    total += data.value * item.amount;
             }
         }
         return total;

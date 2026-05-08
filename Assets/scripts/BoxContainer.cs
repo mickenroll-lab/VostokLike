@@ -121,55 +121,126 @@ public class BoxContainer : MonoBehaviour
 
     void CreateCell(string itemName, int displayCount, bool isAmmo, ref int cellIndex)
     {
-        GameObject cell = Instantiate(gridCellPrefab, boxGridParent);
-        Image cellImage = cell.GetComponent<Image>();
-        cellImage.color = new Color(0.3f, 0.4f, 0.5f, 0.8f);
-
-        TextMeshProUGUI text = cell.GetComponentInChildren<TextMeshProUGUI>();
-        if (text != null)
+        // ItemDataからサイズを取得
+        int itemW = 1;
+        int itemH = 1;
+        if (!isAmmo)
         {
-            text.text = isAmmo && displayCount > 1 ? displayCount.ToString() : "";
-            text.fontSize = 28;
-            text.alignment = TextAlignmentOptions.BottomRight;
+            GameObject prefab = Resources.Load<GameObject>(itemName);
+            if (prefab != null)
+            {
+                ItemData data = prefab.GetComponent<ItemData>();
+                if (data != null)
+                {
+                    itemW = data.gridWidth;
+                    itemH = data.gridHeight;
+                }
+            }
         }
 
-        string captured = itemName;
-        Button btn = cell.GetComponent<Button>();
-        btn.onClick.AddListener(() => MoveToPlayer(captured, Input.GetKey(KeyCode.LeftShift)));
+        // 複数セルにわたって色を付ける
+        for (int dy = 0; dy < itemH; dy++)
+        {
+            for (int dx = 0; dx < itemW; dx++)
+            {
+                if (cellIndex >= gridWidth * gridHeight) return;
 
-        string tooltipName = itemName;
-        EventTrigger trigger = cell.AddComponent<EventTrigger>();
+                GameObject cell = Instantiate(gridCellPrefab, boxGridParent);
+                Image cellImage = cell.GetComponent<Image>();
+                cellImage.color = new Color(0.3f, 0.4f, 0.5f, 0.8f);
 
-        EventTrigger.Entry enterEntry = new EventTrigger.Entry();
-        enterEntry.eventID = EventTriggerType.PointerEnter;
-        enterEntry.callback.AddListener((data) => {
-            if (tooltipText != null) tooltipText.gameObject.SetActive(true);
-            if (tooltipText != null) tooltipText.text = tooltipName;
-        });
-        trigger.triggers.Add(enterEntry);
+                if (dx == 0 && dy == 0)
+                {
+                    TextMeshProUGUI text = cell.GetComponentInChildren<TextMeshProUGUI>();
+                    if (text != null)
+                    {
+                        text.text = isAmmo && displayCount > 1 ? displayCount.ToString() : "";
+                        text.fontSize = 28;
+                        text.alignment = TextAlignmentOptions.BottomRight;
+                    }
 
-        EventTrigger.Entry exitEntry = new EventTrigger.Entry();
-        exitEntry.eventID = EventTriggerType.PointerExit;
-        exitEntry.callback.AddListener((data) => {
-            if (tooltipText != null) tooltipText.gameObject.SetActive(false);
-        });
-        trigger.triggers.Add(exitEntry);
+                    string captured = itemName;
+                    Button btn = cell.GetComponent<Button>();
+                    btn.onClick.AddListener(() => MoveToPlayer(captured, Input.GetKey(KeyCode.LeftShift)));
 
-        DraggableItem draggable = cell.AddComponent<DraggableItem>();
-        draggable.itemName = itemName;
-        draggable.fromInventory = false;
-        draggable.inventory = playerInventory;
-        draggable.boxContainer = this;
-        draggable.dragGhost = dragGhostObject;
+                    string tooltipName = itemName;
+                    EventTrigger trigger = cell.AddComponent<EventTrigger>();
 
-        cellIndex++;
+                    EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+                    enterEntry.eventID = EventTriggerType.PointerEnter;
+                    enterEntry.callback.AddListener((data) => {
+                        if (tooltipText != null) tooltipText.gameObject.SetActive(true);
+                        if (tooltipText != null) tooltipText.text = tooltipName;
+                    });
+                    trigger.triggers.Add(enterEntry);
+
+                    EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+                    exitEntry.eventID = EventTriggerType.PointerExit;
+                    exitEntry.callback.AddListener((data) => {
+                        if (tooltipText != null) tooltipText.gameObject.SetActive(false);
+                    });
+                    trigger.triggers.Add(exitEntry);
+
+                   
+                }
+                else
+                {
+                    string captured = itemName;
+                    Button btn = cell.GetComponent<Button>();
+                    btn.onClick.AddListener(() => MoveToPlayer(captured, Input.GetKey(KeyCode.LeftShift)));
+
+                    // ToolTip追加
+                    string tooltipName = itemName;
+                    EventTrigger trigger = cell.AddComponent<EventTrigger>();
+
+                    EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+                    enterEntry.eventID = EventTriggerType.PointerEnter;
+                    enterEntry.callback.AddListener((data) => {
+                        if (tooltipText != null) tooltipText.gameObject.SetActive(true);
+                        if (tooltipText != null) tooltipText.text = tooltipName;
+                    });
+                    trigger.triggers.Add(enterEntry);
+
+                    EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+                    exitEntry.eventID = EventTriggerType.PointerExit;
+                    exitEntry.callback.AddListener((data) => {
+                        if (tooltipText != null) tooltipText.gameObject.SetActive(false);
+                    });
+
+                    trigger.triggers.Add(exitEntry);
+
+                    DraggableItem draggable = cell.AddComponent<DraggableItem>();
+                    draggable.itemName = itemName;
+                    draggable.fromInventory = false;
+                    draggable.inventory = playerInventory;
+                    draggable.boxContainer = this;
+                    draggable.dragGhost = dragGhostObject;
+                }
+                cellIndex++;
+            }
+        }
     }
     void MoveToPlayer(string itemName, bool moveAll)
     {
-        int amount = moveAll ? boxContents[itemName] : 1;
+        bool isAmmo = itemName == "9x18mm";
+        int amount = (moveAll && isAmmo) ? boxContents[itemName] : 1;
+
+        // ItemDataからサイズを取得
+        int itemW = 1;
+        int itemH = 1;
+        GameObject prefab = Resources.Load<GameObject>(itemName);
+        if (prefab != null)
+        {
+            ItemData data = prefab.GetComponent<ItemData>();
+            if (data != null)
+            {
+                itemW = data.gridWidth;
+                itemH = data.gridHeight;
+            }
+        }
 
         for (int i = 0; i < amount; i++)
-            playerInventory.AddItem(itemName);
+            playerInventory.AddItem(itemName, itemW, itemH);
 
         boxContents[itemName] -= amount;
         if (boxContents[itemName] <= 0)

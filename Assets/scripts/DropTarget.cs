@@ -23,13 +23,27 @@ public class DropTarget : MonoBehaviour, IDropHandler
         // Box→インベントリ
         else if (!draggable.fromInventory && isInventory)
         {
+            // ItemDataからサイズを取得
+            int itemW = 1;
+            int itemH = 1;
+            GameObject prefab = Resources.Load<GameObject>(draggable.itemName);
+            if (prefab != null)
+            {
+                ItemData data = prefab.GetComponent<ItemData>();
+                if (data != null)
+                {
+                    itemW = data.gridWidth;
+                    itemH = data.gridHeight;
+                }
+            }
+
             if (Input.GetKey(KeyCode.LeftShift))
             {
                 boxContainer.MoveAllToPlayer(draggable.itemName);
             }
             else
             {
-                inventory.AddItem(draggable.itemName);
+                inventory.AddItem(draggable.itemName, itemW, itemH);
                 boxContainer.RemoveFromBox(draggable.itemName, 1);
             }
             inventory.UpdateInventoryUI();

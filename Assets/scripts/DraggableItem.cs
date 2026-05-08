@@ -24,6 +24,7 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        Debug.Log("OnBeginDrag fromInventoryÅF" + fromInventory + " itemNameÅF" + itemName);
         if (dragGhost == null) return;
 
         ghostImage = dragGhost.GetComponent<Image>();
