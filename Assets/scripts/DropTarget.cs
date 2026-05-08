@@ -17,13 +17,14 @@ public class DropTarget : MonoBehaviour, IDropHandler
         if (draggable.fromInventory && !isInventory)
         {
             inventory.MoveToBox(draggable.itemName);
+            if (draggable.dragGhost != null) draggable.dragGhost.SetActive(false);
+            Destroy(eventData.pointerDrag.gameObject);
         }
         // Box→インベントリ
         else if (!draggable.fromInventory && isInventory)
         {
             if (Input.GetKey(KeyCode.LeftShift))
             {
-                int count = boxContainer.GetCount(draggable.itemName);
                 boxContainer.MoveAllToPlayer(draggable.itemName);
             }
             else
@@ -31,11 +32,17 @@ public class DropTarget : MonoBehaviour, IDropHandler
                 inventory.AddItem(draggable.itemName);
                 boxContainer.RemoveFromBox(draggable.itemName, 1);
             }
+            inventory.UpdateInventoryUI();
+            boxContainer.UpdateBoxUI();
+            if (draggable.dragGhost != null) draggable.dragGhost.SetActive(false);
+            Destroy(eventData.pointerDrag.gameObject);
         }
-
-        if (draggable.dragGhost != null)
-            draggable.dragGhost.SetActive(false);
-
-        Destroy(eventData.pointerDrag.gameObject);
+        // 同じグリッド内へのドロップは何もしない
+        else
+        {
+            if (draggable.dragGhost != null) draggable.dragGhost.SetActive(false);
+            inventory.UpdateInventoryUI();
+        }
     }
 }
+

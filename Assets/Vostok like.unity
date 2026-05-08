@@ -24242,6 +24242,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2faab303c3d8bc64cb6a886efb0ecd5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  boxContainer: {fileID: 1127049681}
   tooltipText: {fileID: 672827481}
   boxGrid: {fileID: 864757010}
   inventoryPanel: {fileID: 813377324}
@@ -24249,7 +24250,6 @@ MonoBehaviour:
   gridParent: {fileID: 976875998}
   itemManager: {fileID: 3317206976441307077}
   crosshair: {fileID: 1082754829}
-  boxContainer: {fileID: 1127049681}
   dragGhostObject: {fileID: 59185534}
   isOpen: 0
   justClosed: 0
