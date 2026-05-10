@@ -2264,7 +2264,6 @@ GameObject:
   - component: {fileID: 231621803}
   - component: {fileID: 231621802}
   - component: {fileID: 231621801}
-  - component: {fileID: 231621800}
   m_Layer: 0
   m_Name: ExitZone_Out
   m_TagString: ExitOut
@@ -2272,24 +2271,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &231621800
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 231621799}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b12067a30a664cd4fa7e5931954a9e6d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  interactRange: 3
-  playerCamera: {fileID: 1919030237984001321}
-  spawnManager: {fileID: 160750711}
-  inventory: {fileID: 7929434213477956083}
-  enemySpawnManager: {fileID: 1785593183}
-  resultManager: {fileID: 2011192216}
 --- !u!65 &231621801
 BoxCollider:
   m_ObjectHideFlags: 0

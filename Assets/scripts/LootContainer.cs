@@ -12,27 +12,53 @@ public class LootContainer : MonoBehaviour
 
     public void Interact()
     {
-        Debug.Log("InteractŒÄ‚Î‚ê‚½ isGenerated=" + isGenerated);
-        // ˆÈ‰ºŠù‘¶ˆ—
-        // ‰‰ñƒCƒ“ƒ^ƒ‰ƒNƒg‚É’Š‘I
+        Debug.Log($"LootContainer.Interact called isGenerated={isGenerated} boxContainer={(boxContainer != null ? boxContainer.gameObject.name : "null")}");
+        if (boxContainer != null && boxContainer.IsOpen)
+        {
+            Debug.Log("LootContainer.Interact: boxContainer is already open, closing.");
+            boxContainer.CloseBox();
+            return;
+        }
+        // ï¿½È‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        // ï¿½ï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½É’ï¿½ï¿½I
         if (!isGenerated)
         {
             GenerateLoot();
             isGenerated = true;
         }
 
-        // BoxContainer‚ÉƒRƒ“ƒeƒiî•ñ‚ğ“n‚µ‚ÄŠJ‚­
+        if (containerData == null)
+        {
+            Debug.LogWarning("LootContainer.Interact: containerData is null, cannot open container.");
+            return;
+        }
+
+        Debug.Log($"LootContainer.Interact: calling OpenContainer contentsCount={contents.Count} width={containerData.gridWidth} height={containerData.gridHeight}");
+        if (boxContainer == null)
+        {
+            Debug.LogWarning("LootContainer.Interact: boxContainer reference is null.");
+            return;
+        }
         boxContainer.OpenContainer(contents, containerData.gridWidth, containerData.gridHeight);
     }
 
     void GenerateLoot()
     {
         contents.Clear();
-        if (containerData == null || containerData.lootTable == null) return;
+        if (containerData == null || containerData.lootTable == null)
+        {
+            Debug.LogWarning("LootContainer.GenerateLoot: containerData or lootTable is null.");
+            return;
+        }
 
-        // ‹ó”»’è
+        // ï¿½ó”»’ï¿½
         float emptyRoll = Random.Range(0f, 100f);
-        if (emptyRoll <= containerData.emptyChance) return;
+        Debug.Log($"LootContainer.GenerateLoot emptyRoll={emptyRoll} emptyChance={containerData.emptyChance}");
+        if (emptyRoll <= containerData.emptyChance)
+        {
+            Debug.Log("LootContainer.GenerateLoot: generated empty container.");
+            return;
+        }
 
         foreach (var entry in containerData.lootTable.entries)
         {

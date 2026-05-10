@@ -25,7 +25,7 @@ public class ItemPickup : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, pickupRange))
         {
-            if (hit.collider.CompareTag("Item") || hit.collider.CompareTag("Exit") || hit.collider.CompareTag("ItemBox"))
+            if (hit.collider.CompareTag("Item") || hit.collider.CompareTag("Exit") || hit.collider.CompareTag("ItemBox") || hit.collider.CompareTag("LootContainer"))
                 hudManager.ShowInteractText(hit.collider.gameObject.name);
             else
                 hudManager.HideInteractText();
@@ -67,7 +67,7 @@ public class ItemPickup : MonoBehaviour
                     if (box != null && box.contents.Count > 0)
                     {
                         boxContainer.OpenBox(box.contents, box);
-                        Debug.Log("ƒAƒCƒeƒ€ƒ{ƒbƒNƒX‚ðŠJ‚¯‚½");
+                        Debug.Log("ï¿½Aï¿½Cï¿½eï¿½ï¿½ï¿½{ï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½Jï¿½ï¿½ï¿½ï¿½");
                     }
                 }
             }

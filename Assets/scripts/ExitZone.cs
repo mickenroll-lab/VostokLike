@@ -23,16 +23,16 @@ public class ExitZone : MonoBehaviour
             spawnManager = FindObjectOfType<SpawnManager>();
         if (inventory == null)
             inventory = FindObjectOfType<Inventory>();
-        // ˆÈ‰ºŠù‘¶ˆ—
+        // ï¿½È‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         if (Input.GetKeyDown(KeyCode.F))
         {
-            Debug.Log("FƒL[‰Ÿ‚µ‚½");
+            Debug.Log("Fï¿½Lï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
             Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, interactRange))
             {
-                Debug.Log("Raycastƒqƒbƒg: " + hit.collider.name + " tag: " + hit.collider.tag);
+                Debug.Log("Raycastï¿½qï¿½bï¿½g: " + hit.collider.name + " tag: " + hit.collider.tag);
                 if (hit.collider.CompareTag("ExitIn"))
                 {
                     RaidManager.Instance.BeginRaid();
@@ -50,15 +50,15 @@ public class ExitZone : MonoBehaviour
                 }
                 if (hit.collider.tag == "LootContainer")
                 {
-                    Debug.Log("LootContainer“ü‚Á‚½");
+                    Debug.Log("LootContainerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
                     LootContainer lootContainer = hit.collider.GetComponent<LootContainer>();
-                    Debug.Log("LootContaineræ“¾: " + lootContainer);
+                    Debug.Log("LootContainerï¿½æ“¾: " + lootContainer);
                     if (lootContainer != null)
                         lootContainer.Interact();
                 }
                 else
                 {
-                    Debug.Log("ˆê’v‚µ‚È‚©‚Á‚½ tag=[" + hit.collider.tag + "]");
+                    Debug.Log("ï¿½ï¿½vï¿½ï¿½ï¿½È‚ï¿½ï¿½ï¿½ï¿½ï¿½ tag=[" + hit.collider.tag + "]");
                 }
             }
         }

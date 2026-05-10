@@ -48,6 +48,7 @@ public class Inventory : MonoBehaviour
     public GameObject dragGhostObject;
 
     public bool isOpen = false;
+    private bool justOpened = false;
 
     private InventoryGrid inventoryGrid;
     private List<InventoryItem> inventoryItems = new List<InventoryItem>();
@@ -73,6 +74,12 @@ public class Inventory : MonoBehaviour
         if (justClosed)
         {
             justClosed = false;
+            return;
+        }
+
+        if (justOpened)
+        {
+            justOpened = false;
             return;
         }
 
@@ -102,10 +109,23 @@ public class Inventory : MonoBehaviour
     public void OpenFromBox()
     {
         isOpen = true;
+        justOpened = true;
         inventoryPanel.SetActive(true);
         if (crosshair != null) crosshair.SetActive(false);
+        Debug.Log("Inventory.OpenFromBox: opened inventory from box");
         UpdateInventoryUI();
     }
+
+    public void CloseFromBox()
+    {
+        isOpen = false;
+        justClosed = true;
+        inventoryPanel.SetActive(false);
+        if (crosshair != null) crosshair.SetActive(true);
+        tooltipText.gameObject.SetActive(false);
+        if (boxGrid != null) boxGrid.SetActive(false);
+    }
+
     public void AddItem(string itemName)
     {
         int stackLimit = GetStackLimit(itemName);
