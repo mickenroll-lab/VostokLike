@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class MouseLook : MonoBehaviour
 {
+
+    public Inventory inventory;
+
     public float mouseSensitivity = 300f;
     public Transform playerBody;
     float xRotation = 0f;
@@ -11,10 +14,16 @@ public class MouseLook : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
     }
 
+    public void ResetRotation()
+    {
+        xRotation = 0f;
+        transform.localRotation = Quaternion.identity;
+    }
+
     void Update()
     {
         PlayerState playerState = playerBody.GetComponent<PlayerState>();
-        Inventory inventory = playerBody.GetComponent<Inventory>();
+        // à»â∫ä˘ë∂èàóù
         ResultManager resultManager = FindObjectOfType<ResultManager>();
 
         if ((inventory != null && inventory.inventoryPanel.activeSelf) ||

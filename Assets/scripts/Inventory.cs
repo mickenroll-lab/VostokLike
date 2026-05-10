@@ -155,16 +155,25 @@ public class Inventory : MonoBehaviour
                 items[key] = 1;
         }
 
-        // inventoryItemsにサイズ付きで追加
-        int foundX, foundY;
-        if (inventoryGrid.FindFreeSpace(w, h, out foundX, out foundY))
+        // 既存のInventoryItemがあればamountを増やすだけ、なければ新規配置
+        InventoryItem existing = inventoryItems.Find(item => item.itemName == itemName);
+        if (existing != null)
         {
-            InventoryItem newItem = new InventoryItem(itemName, foundX, foundY, w, h);
-            inventoryItems.Add(newItem);
-            inventoryGrid.PlaceItem(newItem.itemId, foundX, foundY, w, h);
+            existing.amount++;
         }
-
+        else
+        {
+            int foundX, foundY;
+            if (inventoryGrid.FindFreeSpace(w, h, out foundX, out foundY))
+            {
+                InventoryItem newItem = new InventoryItem(itemName, foundX, foundY, w, h);
+                inventoryItems.Add(newItem);
+                inventoryGrid.PlaceItem(newItem.itemId, foundX, foundY, w, h);
+            }
+        }
         UpdateInventoryUI();
+
+       
     }
     int GetStackLimit(string itemName)
     {
@@ -182,15 +191,39 @@ public class Inventory : MonoBehaviour
             items[itemName]--;
             if (items[itemName] <= 0)
                 items.Remove(itemName);
-            UpdateInventoryUI();
             Debug.Log("回復した");
+            InventoryItem target = inventoryItems.Find(item => item.itemName == itemName);
+            if (target != null)
+            {
+                if (target.amount > 1)
+                    target.amount--;
+                else
+                {
+                    inventoryGrid.RemoveItem(target.itemId);
+                    inventoryItems.Remove(target);
+                }
+            }
+            UpdateInventoryUI(); // ← 最後に移動
         }
+
+
         else if (itemName == "BeefCan")
         {
             itemManager.PickupFood(30);
             items[itemName]--;
             if (items[itemName] <= 0)
                 items.Remove(itemName);
+            InventoryItem target = inventoryItems.Find(item => item.itemName == itemName);
+            if (target != null)
+            {
+                if (target.amount > 1)
+                    target.amount--;
+                else
+                {
+                    inventoryGrid.RemoveItem(target.itemId);
+                    inventoryItems.Remove(target);
+                }
+            }
             UpdateInventoryUI();
         }
         else if (itemName == "Water")
@@ -199,6 +232,17 @@ public class Inventory : MonoBehaviour
             items[itemName]--;
             if (items[itemName] <= 0)
                 items.Remove(itemName);
+            InventoryItem target = inventoryItems.Find(item => item.itemName == itemName);
+            if (target != null)
+            {
+                if (target.amount > 1)
+                    target.amount--;
+                else
+                {
+                    inventoryGrid.RemoveItem(target.itemId);
+                    inventoryItems.Remove(target);
+                }
+            }
             UpdateInventoryUI();
         }
     }
@@ -215,6 +259,15 @@ public class Inventory : MonoBehaviour
         items[itemName]--;
         if (items[itemName] <= 0)
             items.Remove(itemName);
+
+        // ↓ 追加：グリッドからも削除
+        InventoryItem target = inventoryItems.Find(item => item.itemName == itemName);
+        if (target != null)
+        {
+            inventoryGrid.RemoveItem(target.itemId);
+            inventoryItems.Remove(target);
+        }
+
         UpdateInventoryUI();
     }
 
@@ -231,20 +284,47 @@ public class Inventory : MonoBehaviour
         if (items.ContainsKey(itemName) && items[itemName] > 0)
         {
             items[itemName]--;
-            if (items[itemName] <= 0)
-                items.Remove(itemName);
+            InventoryItem target = inventoryItems.Find(item => item.itemName == itemName);
+            if (target != null)
+            {
+                target.amount--;
+                if (items[itemName] <= 0)
+                {
+                    items.Remove(itemName);
+                    inventoryGrid.RemoveItem(target.itemId);
+                    inventoryItems.Remove(target);
+                }
+            }
         }
         else if (items.ContainsKey(itemName + "_2") && items[itemName + "_2"] > 0)
         {
             items[itemName + "_2"]--;
-            if (items[itemName + "_2"] <= 0)
-                items.Remove(itemName + "_2");
+            InventoryItem target = inventoryItems.Find(item => item.itemName == itemName);
+            if (target != null)
+            {
+                target.amount--;
+                if (items[itemName + "_2"] <= 0)
+                {
+                    items.Remove(itemName + "_2");
+                    inventoryGrid.RemoveItem(target.itemId);
+                    inventoryItems.Remove(target);
+                }
+            }
         }
+        UpdateInventoryUI();
+    }
+
+    public void ClearInventory()
+    {
+        items.Clear();
+        inventoryItems.Clear();
+        inventoryGrid.Clear();
         UpdateInventoryUI();
     }
 
     public void UpdateInventoryUI()
     {
+        // 既存処理
         for (int i = gridParent.childCount - 1; i >= 0; i--)
             DestroyImmediate(gridParent.GetChild(i).gameObject);
 

@@ -57,6 +57,13 @@ public class InventoryGrid : MonoBehaviour
         }
     }
 
+    public void Clear()
+    {
+        for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
+                grid[x, y] = null;
+    }
+
     // 空きスペースを自動検索
     public bool FindFreeSpace(int itemWidth, int itemHeight, out int foundX, out int foundY)
     {

@@ -6,9 +6,24 @@ public class Gun : MonoBehaviour
     public Inventory inventory;
     public GameObject hitEffectPrefab;
 
+    public ParticleSystem muzzleFlash;
+
     private WeaponData currentWeapon;
     private int currentAmmo;
     private bool isReloading = false;
+
+    private Camera mainCamera;
+    private Vector3 originalCameraPos;
+    public float shakeDuration = 0.1f;
+    public float shakeMagnitude = 0.05f;
+
+
+
+    void Start()
+    {
+        mainCamera = Camera.main;
+        originalCameraPos = mainCamera.transform.localPosition;
+    }
 
     void Update()
     {
@@ -18,6 +33,8 @@ public class Gun : MonoBehaviour
 
         // インベントリが開いていたら射撃不可
         if (inventory != null && inventory.inventoryPanel.activeSelf) return;
+        if (state.deathPanel != null && state.deathPanel.activeSelf) return;
+
         if (isReloading) return;
 
         if (Input.GetKeyDown(KeyCode.R))
@@ -52,6 +69,9 @@ public class Gun : MonoBehaviour
 
     void Shoot()
     {
+        if (muzzleFlash != null)
+            muzzleFlash.Play();
+
         if (currentWeapon == null) return;
 
         currentAmmo--;
@@ -62,16 +82,30 @@ public class Gun : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, currentWeapon.range))
         {
+            Debug.Log("Raycastヒット: " + hit.collider.name + " tag: " + hit.collider.tag);
+            // 以下既存処理
             if (hitEffectPrefab != null)
             {
                 GameObject effect = Instantiate(hitEffectPrefab, hit.point, Quaternion.identity);
                 Destroy(effect, 0.1f);
             }
 
-            Enemy enemy = hit.collider.GetComponent<Enemy>();
+            Enemy enemy = hit.collider.GetComponent<Enemy>() ?? hit.collider.GetComponentInParent<Enemy>();
             if (enemy != null)
                 enemy.TakeDamage((int)currentWeapon.damage);
         }
+        StartCoroutine(CameraShake());
+    }
+    IEnumerator CameraShake()
+    {
+        float elapsed = 0f;
+        while (elapsed < shakeDuration)
+        {
+            mainCamera.transform.localPosition = originalCameraPos + Random.insideUnitSphere * shakeMagnitude;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        mainCamera.transform.localPosition = originalCameraPos;
     }
 
     IEnumerator Reload()

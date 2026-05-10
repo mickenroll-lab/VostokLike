@@ -6,11 +6,15 @@ using TMPro;
 public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public string itemName; // itemId‚ðŠi”[
+    
     public bool fromInventory;
+    public EquipmentSlot fromEquipmentSlot;
+
     public Inventory inventory;
     public BoxContainer boxContainer;
     public GameObject dragGhost;
 
+   
     private CanvasGroup canvasGroup;
     private Image ghostImage;
     private TextMeshProUGUI ghostText;

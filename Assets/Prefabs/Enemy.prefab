@@ -134,10 +134,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 0}
-  detectionRange: 20
+  detectionRange: 30
+  alertDetectionRange: 60
   fieldOfView: 90
-  attackRange: 1.5
-  attackDamage: 10
+  attackRange: 60
+  attackDamage: 20
   attackCooldown: 1.5
   patrolPoints:
   - {fileID: 3656088091130990143}

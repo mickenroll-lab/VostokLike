@@ -8,6 +8,9 @@ public class SpawnManager : MonoBehaviour
 
     public void SpawnAtField()
     {
+        if (player == null || !player.activeInHierarchy)
+            player = GameObject.FindWithTag("Player");
+
         CharacterController cc = player.GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
         player.transform.position = spawnPointField.position;
@@ -17,6 +20,9 @@ public class SpawnManager : MonoBehaviour
 
     public void SpawnAtSafe()
     {
+        if (player == null || !player.activeInHierarchy)
+            player = GameObject.FindWithTag("Player");
+
         Debug.Log("SpawnAtSafeé¿çs playerÅF" + player.GetInstanceID());
         CharacterController cc = player.GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;

@@ -20,6 +20,7 @@ TagManager:
   - PatrolPoint
   - ItemBox
   - Wall
+  - LootContainer
   layers:
   - Default
   - TransparentFX

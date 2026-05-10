@@ -3,7 +3,13 @@ using UnityEngine;
 public class ItemData : MonoBehaviour
 {
     public string itemType;
-    public enum ItemCategory { Weapon, Consumable }
+    public enum ItemCategory
+    {
+        Weapon,
+        Consumable,
+        Bullet,     // ’Ç‰Á
+                    // Magazine, // Œã‚Å’Ç‰Á
+    }
     public ItemCategory category;
     public int amount = 1;
     public int value = 0;

@@ -121,4 +121,6 @@ MonoBehaviour:
   itemType: Water
   category: 1
   amount: 30
-  value: 0
+  value: 30
+  gridWidth: 1
+  gridHeight: 1

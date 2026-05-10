@@ -119,6 +119,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemType: 9x18mm
-  category: 1
+  category: 2
   amount: 1
   value: 10
+  gridWidth: 1
+  gridHeight: 1
