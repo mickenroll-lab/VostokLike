@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e367e5231786c74c901b5a8e42ffe1e, type: 3}
+  m_Name: LootTable_WeaponCrate
+  m_EditorClassIdentifier: 
+  entries:
+  - itemName: PMP
+    minAmount: 1
+    maxAmount: 1
+    chance: 25
+  - itemName: 9x18mm
+    minAmount: 5
+    maxAmount: 15
+    chance: 30
+  - itemName: MedKit
+    minAmount: 1
+    maxAmount: 1
+    chance: 5

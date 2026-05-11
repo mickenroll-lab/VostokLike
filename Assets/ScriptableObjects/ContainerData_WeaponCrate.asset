@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad0ce67456090494d99e506228f4dbae, type: 3}
-  m_Name: ContainerData
+  m_Name: ContainerData_WeaponCrate
   m_EditorClassIdentifier: 
   gridWidth: 4
   gridHeight: 4
-  lootTable: {fileID: 11400000, guid: 5ec2bdedc5bdf4f4ea09a29ca3e40135, type: 2}
+  lootTable: {fileID: 11400000, guid: 7856eb3497fa4ad4abc1311e057d474c, type: 2}
   emptyChance: 75
