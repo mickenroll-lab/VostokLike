@@ -10,17 +10,14 @@ public class BoxContainer : MonoBehaviour
     public TextMeshProUGUI tooltipText;
     public GameObject gridCellPrefab;
     public Transform boxGridParent;
-    
+
     public Inventory playerInventory;
     public EquipmentSlot weaponSlot;
 
     public PlayerState playerState;
 
-
-
     public GameObject boxGrid;
     public GameObject dragGhostObject;
-
 
     public int GetCount(string itemName)
     {
@@ -33,10 +30,10 @@ public class BoxContainer : MonoBehaviour
     private int gridHeight = 12;
     private Dictionary<string, int> boxContents = new Dictionary<string, int>();
     private ItemBox currentBox;
+    private LootContainer currentLootContainer;
     private bool isOpen = false;
 
     public bool IsOpen { get { return isOpen; } }
-
 
     public void MoveAllToPlayer(string itemName)
     {
@@ -47,9 +44,12 @@ public class BoxContainer : MonoBehaviour
         boxContents.Remove(itemName);
         if (currentBox != null && currentBox.contents.ContainsKey(itemName))
             currentBox.contents.Remove(itemName);
+        if (currentLootContainer != null)
+            currentLootContainer.RemoveFromContents(itemName, count);
         UpdateBoxUI();
         playerInventory.UpdateInventoryUI();
     }
+
     public void OpenBox(Dictionary<string, int> contents, ItemBox box)
     {
         Debug.Log("BoxContainer.OpenBox(ItemBox) called\n" + System.Environment.StackTrace);
@@ -77,11 +77,11 @@ public class BoxContainer : MonoBehaviour
         UpdateBoxUI();
         if (boxGrid != null) boxGrid.SetActive(false);
         isOpen = false;
+        currentLootContainer = null;
         if (playerInventory != null)
-        {
             playerInventory.CloseFromBox();
-        }
     }
+
     public void RemoveFromBox(string itemName, int amount)
     {
         if (!boxContents.ContainsKey(itemName)) return;
@@ -95,8 +95,11 @@ public class BoxContainer : MonoBehaviour
             if (currentBox.contents[itemName] <= 0)
                 currentBox.contents.Remove(itemName);
         }
+        if (currentLootContainer != null)
+            currentLootContainer.RemoveFromContents(itemName, amount);
         UpdateBoxUI();
     }
+
     public void RemoveFromBox(string itemName)
     {
         if (boxContents.ContainsKey(itemName))
@@ -114,6 +117,8 @@ public class BoxContainer : MonoBehaviour
                     currentBox.contents.Remove(itemName);
             }
         }
+        if (currentLootContainer != null)
+            currentLootContainer.RemoveFromContents(itemName, 1);
         UpdateBoxUI();
     }
 
@@ -133,24 +138,19 @@ public class BoxContainer : MonoBehaviour
         UpdateBoxUI();
     }
 
-    public void OpenContainer(Dictionary<string, int> contents, int width, int height)
+    public void OpenContainer(Dictionary<string, int> contents, int width, int height, LootContainer lootContainer = null)
     {
-        Debug.Log("BoxContainer.OpenContainer called\n" + System.Environment.StackTrace);
-        Debug.Log($"BoxContainer.OpenContainer called contentsCount={contents.Count} width={width} height={height} boxGrid={(boxGrid != null ? boxGrid.name : "null")} boxGridActiveBefore={(boxGrid != null ? boxGrid.activeSelf.ToString() : "n/a")}");
+        Debug.Log($"BoxContainer.OpenContainer called contentsCount={contents.Count} width={width} height={height}");
         gridWidth = width;
         gridHeight = height;
-        currentBox = null; // LootContainer��ItemBox�ł͂Ȃ�
+        currentBox = null;
+        currentLootContainer = lootContainer;
         if (playerInventory != null)
             playerInventory.OpenFromBox();
         if (boxGrid != null)
-        {
             boxGrid.SetActive(true);
-            Debug.Log($"BoxContainer.OpenContainer set boxGrid active={boxGrid.activeSelf}");
-        }
         else
-        {
             Debug.LogWarning("BoxContainer.OpenContainer: boxGrid reference is null.");
-        }
         boxContents = new Dictionary<string, int>(contents);
         isOpen = true;
         UpdateBoxUI();
@@ -167,7 +167,6 @@ public class BoxContainer : MonoBehaviour
             Destroy(child.gameObject);
 
         int totalCells = gridWidth * gridHeight;
-        Debug.Log($"BoxContainer.UpdateBoxUI contents={boxContents.Count} totalCells={totalCells}");
         int cellIndex = 0;
         List<string> keys = new List<string>(boxContents.Keys);
 
@@ -176,25 +175,31 @@ public class BoxContainer : MonoBehaviour
             if (cellIndex >= totalCells) break;
 
             int count = boxContents[itemName];
-            bool isAmmo = itemName == "9x18mm";
 
-            if (isAmmo)
+            // Bullet（弾薬）のみスタック表示、Consumable・Weaponは個別セル
+            bool isStackable = false;
+            GameObject checkPrefab = Resources.Load<GameObject>(itemName);
+            if (checkPrefab != null)
             {
-                // �e��̓X�^�b�N�\���i1�Z���j
-                CreateCell(itemName, count, true, ref cellIndex);
+                ItemData checkData = checkPrefab.GetComponent<ItemData>();
+                if (checkData != null)
+                    isStackable = checkData.category == ItemCategory.Bullet;
+            }
+
+            if (isStackable)
+            {
+                CreateCell(itemName, count, ref cellIndex);
             }
             else
             {
-                // ����ȊO�͌ʕ\��
                 for (int j = 0; j < count; j++)
                 {
                     if (cellIndex >= totalCells) break;
-                    CreateCell(itemName, 1, false, ref cellIndex);
+                    CreateCell(itemName, 1, ref cellIndex);
                 }
             }
         }
 
-        // �c��̋�Z���𖄂߂�
         while (cellIndex < totalCells)
         {
             GameObject cell = Instantiate(gridCellPrefab, boxGridParent);
@@ -219,41 +224,34 @@ public class BoxContainer : MonoBehaviour
 
             case ItemCategory.Weapon:
                 if (weaponSlot == null) return;
-                // ���ɑ������̂��̂��C���x���g���ɖ߂�������EquipmentSlot.OnDrop�Ɠ���
                 weaponSlot.EquipFromBox(itemName, this);
                 break;
 
             case ItemCategory.Bullet:
-                Debug.Log("�e��͒��ڎg�p�s��: " + itemName);
+                Debug.Log("弾薬は直接使用不可: " + itemName);
                 break;
 
             default:
-                Debug.LogWarning("PrimaryAction����`�̃J�e�S��: " + data.category);
+                Debug.LogWarning("PrimaryAction未定義のカテゴリ: " + data.category);
                 break;
         }
-
     }
 
-    void CreateCell(string itemName, int displayCount, bool isAmmo, ref int cellIndex)
+    void CreateCell(string itemName, int displayCount, ref int cellIndex)
     {
-        // ItemData����T�C�Y���擾
         int itemW = 1;
         int itemH = 1;
-        if (!isAmmo)
+        GameObject prefab = Resources.Load<GameObject>(itemName);
+        if (prefab != null)
         {
-            GameObject prefab = Resources.Load<GameObject>(itemName);
-            if (prefab != null)
+            ItemData data = prefab.GetComponent<ItemData>();
+            if (data != null)
             {
-                ItemData data = prefab.GetComponent<ItemData>();
-                if (data != null)
-                {
-                    itemW = data.gridWidth;
-                    itemH = data.gridHeight;
-                }
+                itemW = data.gridWidth;
+                itemH = data.gridHeight;
             }
         }
 
-        // �����Z���ɂ킽���ĐF��t����
         for (int dy = 0; dy < itemH; dy++)
         {
             for (int dx = 0; dx < itemW; dx++)
@@ -269,15 +267,13 @@ public class BoxContainer : MonoBehaviour
                     TextMeshProUGUI text = cell.GetComponentInChildren<TextMeshProUGUI>();
                     if (text != null)
                     {
-                        text.text = isAmmo && displayCount > 1 ? displayCount.ToString() : "";
+                        text.text = displayCount > 1 ? displayCount.ToString() : "";
                         text.fontSize = 28;
                         text.alignment = TextAlignmentOptions.BottomRight;
                     }
 
                     string captured = itemName;
                     Button btn = cell.GetComponent<Button>();
-                   
-              
                     btn.onClick.AddListener(() =>
                     {
                         if (Input.GetKey(KeyCode.LeftShift))
@@ -288,7 +284,6 @@ public class BoxContainer : MonoBehaviour
 
                     string tooltipName = itemName;
                     EventTrigger trigger = cell.AddComponent<EventTrigger>();
-
 
                     EventTrigger.Entry enterEntry = new EventTrigger.Entry();
                     enterEntry.eventID = EventTriggerType.PointerEnter;
@@ -306,13 +301,8 @@ public class BoxContainer : MonoBehaviour
                         if (tooltipText != null) tooltipText.gameObject.SetActive(false);
                     });
                     trigger.triggers.Add(exitEntry);
-                }
-                // else �u���b�N���폜���ADraggableItem �����������Ɉړ�
-                if (dx == 0 && dy == 0)  // ���C���Z���̂� DraggableItem ���A�^�b�`
-                {
-                    Debug.Log($"[CreateCell] cell.name={cell.name} | dx={dx} | dy={dy} | cell.GetInstanceID()={cell.GetInstanceID()}");
+
                     DraggableItem draggable = cell.AddComponent<DraggableItem>();
-                    Debug.Log("DraggableItem�ǉ��F" + cell.name + " dx:" + dx + " dy:" + dy);
                     draggable.itemName = itemName;
                     draggable.fromInventory = false;
                     draggable.inventory = playerInventory;
@@ -321,53 +311,39 @@ public class BoxContainer : MonoBehaviour
                 }
                 cellIndex++;
             }
+
             void MoveToPlayer(string itemName, bool moveAll)
             {
-                if (!boxContents.ContainsKey(itemName)) return; // �� �擪�Ɉړ�
-                bool isAmmo = itemName == "9x18mm";
-                int amount = (moveAll && isAmmo) ? boxContents[itemName] : 1;
-                // �ȉ����̂܂�
-                // ItemData����T�C�Y���擾
-                int itemW = 1;
-                int itemH = 1;
+                if (!boxContents.ContainsKey(itemName)) return;
+
                 GameObject prefab = Resources.Load<GameObject>(itemName);
-                if (prefab != null)
-                {
-                    ItemData data = prefab.GetComponent<ItemData>();
-                    if (data != null)
-                    {
-                        itemW = data.gridWidth;
-                        itemH = data.gridHeight;
-                    }
-                }
+                ItemData data = prefab != null ? prefab.GetComponent<ItemData>() : null;
+
+                int amount = 1;
+
+                int itemW = data != null ? data.gridWidth : 1;
+                int itemH = data != null ? data.gridHeight : 1;
 
                 for (int i = 0; i < amount; i++)
                     playerInventory.AddItem(itemName, itemW, itemH);
 
-           
                 boxContents[itemName] -= amount;
-
                 if (boxContents[itemName] <= 0)
                     boxContents.Remove(itemName);
 
-                
+                if (currentBox != null && currentBox.contents.ContainsKey(itemName))
                 {
-                    if (currentBox != null)
-                    {
-                        if (currentBox.contents.ContainsKey(itemName))
-                        {
-                            currentBox.contents[itemName] -= amount;
-                            if (currentBox.contents[itemName] <= 0)
-                                currentBox.contents.Remove(itemName);
-                        }
-                    }
+                    currentBox.contents[itemName] -= amount;
+                    if (currentBox.contents[itemName] <= 0)
+                        currentBox.contents.Remove(itemName);
                 }
+
+                if (currentLootContainer != null)
+                    currentLootContainer.RemoveFromContents(itemName, amount);
 
                 UpdateBoxUI();
                 playerInventory.UpdateInventoryUI();
             }
-
         }
     }
-    
 }

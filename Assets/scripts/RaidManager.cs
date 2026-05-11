@@ -9,6 +9,7 @@ public class RaidManager : MonoBehaviour
     public SpawnManager spawnManager;
     public EnemySpawnManager enemySpawnManager;
     public ResultManager resultManager;
+    public Transform raidRuntimeRoot;
 
     public enum RaidState { SafeZone, InRaid }
     public RaidState currentState = RaidState.SafeZone;
@@ -60,9 +61,20 @@ public class RaidManager : MonoBehaviour
     {
         enemySpawnManager.ResetEnemies();
 
-        LootContainer[] containers = FindObjectsOfType<LootContainer>();
-        foreach (LootContainer container in containers)
-            container.ResetContainer();
+        if (raidRuntimeRoot != null)
+        {
+            Transform lootRoot = raidRuntimeRoot.Find("Loot");
+            if (lootRoot != null)
+            {
+                foreach (LootContainer container in lootRoot.GetComponentsInChildren<LootContainer>())
+                    container.ResetContainer();
+            }
+        }
+        else
+        {
+            foreach (LootContainer container in FindObjectsOfType<LootContainer>())
+                container.ResetContainer();
+        }
 
         Debug.Log("ワールドリセット完了");
     }

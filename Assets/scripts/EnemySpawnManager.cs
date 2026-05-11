@@ -5,6 +5,7 @@ public class EnemySpawnManager : MonoBehaviour
     public GameObject enemyPrefab;
     public Transform[] spawnPoints;
     public int enemyCount = 5;
+    public Transform enemiesRoot;
 
     void Start()
     {
@@ -13,21 +14,26 @@ public class EnemySpawnManager : MonoBehaviour
 
     public void ResetEnemies()
     {
-        Debug.Log("ResetEnemiesÀs");
+        Debug.Log("ResetEnemiesï¿½ï¿½ï¿½s");
         StartCoroutine(ResetEnemiesCoroutine());
     }
 
     System.Collections.IEnumerator ResetEnemiesCoroutine()
     {
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        foreach (GameObject enemy in enemies)
-            Destroy(enemy);
+        if (enemiesRoot != null)
+        {
+            foreach (Transform child in enemiesRoot)
+                Destroy(child.gameObject);
+        }
+        else
+        {
+            foreach (GameObject enemy in GameObject.FindGameObjectsWithTag("Enemy"))
+                Destroy(enemy);
+        }
 
-        Debug.Log("“GíœŠ®—¹");
         yield return new WaitForSeconds(1f);
 
         SpawnEnemies();
-        Debug.Log("“GÄƒXƒ|[ƒ“Š®—¹");
     }
 
     void SpawnEnemies()
@@ -36,7 +42,7 @@ public class EnemySpawnManager : MonoBehaviour
         {
             int randomIndex = Random.Range(0, spawnPoints.Length);
             Transform spawnPoint = spawnPoints[randomIndex];
-            Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
+            Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation, enemiesRoot);
         }
     }
 }

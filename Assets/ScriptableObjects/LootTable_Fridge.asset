@@ -16,15 +16,15 @@ MonoBehaviour:
   - itemName: BeefCan
     minAmount: 1
     maxAmount: 2
-    chance: 30
+    chance: 100
   - itemName: Water
     minAmount: 1
     maxAmount: 2
-    chance: 25
+    chance: 100
   - itemName: MedKit
     minAmount: 1
     maxAmount: 1
-    chance: 5
+    chance: 100
   - itemName: PMP
     minAmount: 1
     maxAmount: 1

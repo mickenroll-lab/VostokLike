@@ -9,6 +9,27 @@ public class Inventory : MonoBehaviour
 
     public BoxContainer boxContainer;
 
+    public void MoveToBoxItem(InventoryItem specificItem)
+    {
+        if (boxContainer == null || !boxGrid.activeSelf) return;
+        if (specificItem == null || !inventoryItems.Contains(specificItem)) return;
+
+        boxContainer.AddToBox(specificItem.itemName, 1);
+
+        if (items.ContainsKey(specificItem.itemName))
+        {
+            items[specificItem.itemName]--;
+            if (items[specificItem.itemName] <= 0)
+                items.Remove(specificItem.itemName);
+        }
+
+        inventoryGrid.RemoveItem(specificItem.itemId);
+        inventoryItems.Remove(specificItem);
+
+        UpdateInventoryUI();
+        boxContainer.UpdateBoxUI();
+    }
+
     public void MoveToBox(string itemName, bool moveAll = false)
     {
         if (boxContainer == null || !boxGrid.activeSelf) return;
@@ -16,21 +37,23 @@ public class Inventory : MonoBehaviour
         if (moveAll)
         {
             int count = items.ContainsKey(itemName) ? items[itemName] : 0;
+            if (count <= 0) return;
             boxContainer.AddToBox(itemName, count);
             items.Remove(itemName);
+
+            // 同名のInventoryItemを全て削除
+            List<InventoryItem> toRemove = inventoryItems.FindAll(i => i.itemName == itemName);
+            foreach (InventoryItem inv in toRemove)
+            {
+                inventoryGrid.RemoveItem(inv.itemId);
+                inventoryItems.Remove(inv);
+            }
         }
         else
         {
+            // RemoveItemがdictとinventoryItemsの両方を1個削除する
             boxContainer.AddToBox(itemName, 1);
             RemoveItem(itemName);
-        }
-
-        // inventoryItemsからも削除
-        InventoryItem invItem = inventoryItems.Find(i => i.itemName == itemName);
-        if (invItem != null)
-        {
-            inventoryGrid.RemoveItem(invItem.itemId);
-            inventoryItems.Remove(invItem);
         }
 
         UpdateInventoryUI();
@@ -139,25 +162,23 @@ public class Inventory : MonoBehaviour
     {
         int stackLimit = GetStackLimit(itemName);
 
-        // 既存のスタックで上限に達していないものを探す
-        if (items.ContainsKey(itemName) && items[itemName] < stackLimit)
-        {
+        if (items.ContainsKey(itemName))
             items[itemName]++;
-        }
-        else if (!items.ContainsKey(itemName))
-        {
-            items[itemName] = 1;
-        }
         else
+            items[itemName] = 1;
+
+        // stackLimit > 1（弾薬等）のみ既存セルにスタック、それ以外は常に新規セル
+        if (stackLimit > 1)
         {
-            // 上限に達したら2つ目のスタックを作る
-            string key = itemName + "_2";
-            if (items.ContainsKey(key) && items[key] < stackLimit)
-                items[key]++;
-            else
-                items[key] = 1;
+            InventoryItem existing = inventoryItems.Find(item => item.itemName == itemName);
+            if (existing != null)
+            {
+                existing.amount++;
+                Debug.Log("アイテム追加（スタック）：" + itemName);
+                return;
+            }
         }
-        // 新グリッドシステムにも追加
+
         int foundX, foundY;
         if (inventoryGrid.FindFreeSpace(1, 1, out foundX, out foundY))
         {
@@ -167,43 +188,38 @@ public class Inventory : MonoBehaviour
         }
         Debug.Log("アイテム追加：" + itemName);
     }
+
     public void AddItem(string itemName, int w, int h)
     {
-        // 既存のDictionary処理
         int stackLimit = GetStackLimit(itemName);
-        if (items.ContainsKey(itemName) && items[itemName] < stackLimit)
-            items[itemName]++;
-        else if (!items.ContainsKey(itemName))
-            items[itemName] = 1;
-        else
-        {
-            string key = itemName + "_2";
-            if (items.ContainsKey(key) && items[key] < stackLimit)
-                items[key]++;
-            else
-                items[key] = 1;
-        }
 
-        // 既存のInventoryItemがあればamountを増やすだけ、なければ新規配置
-        InventoryItem existing = inventoryItems.Find(item => item.itemName == itemName);
-        if (existing != null)
-        {
-            existing.amount++;
-        }
+        if (items.ContainsKey(itemName))
+            items[itemName]++;
         else
+            items[itemName] = 1;
+
+        // stackLimit > 1（弾薬等）のみ既存セルにスタック、それ以外は常に新規セル
+        if (stackLimit > 1)
         {
-            int foundX, foundY;
-            if (inventoryGrid.FindFreeSpace(w, h, out foundX, out foundY))
+            InventoryItem existing = inventoryItems.Find(item => item.itemName == itemName);
+            if (existing != null)
             {
-                InventoryItem newItem = new InventoryItem(itemName, foundX, foundY, w, h);
-                inventoryItems.Add(newItem);
-                inventoryGrid.PlaceItem(newItem.itemId, foundX, foundY, w, h);
+                existing.amount++;
+                UpdateInventoryUI();
+                return;
             }
         }
-        UpdateInventoryUI();
 
-       
+        int foundX, foundY;
+        if (inventoryGrid.FindFreeSpace(w, h, out foundX, out foundY))
+        {
+            InventoryItem newItem = new InventoryItem(itemName, foundX, foundY, w, h);
+            inventoryItems.Add(newItem);
+            inventoryGrid.PlaceItem(newItem.itemId, foundX, foundY, w, h);
+        }
+        UpdateInventoryUI();
     }
+
     int GetStackLimit(string itemName)
     {
         if (itemName == "9x18mm") return 30;
@@ -411,15 +427,16 @@ public class Inventory : MonoBehaviour
                         TextMeshProUGUI text = itemCell.GetComponentInChildren<TextMeshProUGUI>();
                         if (text != null)
                         {
-                            text.text = item.itemName == "9x18mm" && item.amount > 1 ? item.amount.ToString() : "";
+                            text.text = item.amount > 1 ? item.amount.ToString() : "";
                             text.fontSize = 28;
                             text.alignment = TextAlignmentOptions.BottomRight;
                         }
 
                         string captured = item.itemName;
+                        InventoryItem capturedItem = item;
                         itemCell.GetComponent<Button>().onClick.AddListener(() => {
                             if (Input.GetKey(KeyCode.LeftShift))
-                                MoveToBox(captured, true);
+                                MoveToBoxItem(capturedItem);
                             else
                                 UseItem(captured);
                         });

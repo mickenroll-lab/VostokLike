@@ -39,7 +39,7 @@ public class LootContainer : MonoBehaviour
             Debug.LogWarning("LootContainer.Interact: boxContainer reference is null.");
             return;
         }
-        boxContainer.OpenContainer(contents, containerData.gridWidth, containerData.gridHeight);
+        boxContainer.OpenContainer(contents, containerData.gridWidth, containerData.gridHeight, this);
     }
 
     void GenerateLoot()
@@ -72,6 +72,14 @@ public class LootContainer : MonoBehaviour
                     contents[entry.itemName] = amount;
             }
         }
+    }
+
+    public void RemoveFromContents(string itemName, int amount)
+    {
+        if (!contents.ContainsKey(itemName)) return;
+        contents[itemName] -= amount;
+        if (contents[itemName] <= 0)
+            contents.Remove(itemName);
     }
 
     public void ResetContainer()

@@ -15,4 +15,4 @@ MonoBehaviour:
   gridWidth: 4
   gridHeight: 4
   lootTable: {fileID: 11400000, guid: f6742d47acb1b8547bf78cb7de5c1e45, type: 2}
-  emptyChance: 75
+  emptyChance: 0
