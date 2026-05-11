@@ -214,7 +214,7 @@ public class BoxContainer : MonoBehaviour
         {
             case ItemCategory.Consumable:
                 RemoveFromBox(itemName, 1);
-                playerInventory.UseItem(itemName);
+                playerInventory.ApplyConsumableEffect(itemName);
                 break;
 
             case ItemCategory.Weapon:

@@ -268,6 +268,16 @@ public class Inventory : MonoBehaviour
     }
 
 
+    public void ApplyConsumableEffect(string itemName)
+    {
+        if (itemName == "MedKit")
+            itemManager.PickupMedKit(30);
+        else if (itemName == "BeefCan")
+            itemManager.PickupFood(30);
+        else if (itemName == "Water")
+            itemManager.PickupWater(30);
+    }
+
     public bool HasItem(string itemName)
     {
         return items.ContainsKey(itemName) && items[itemName] > 0;
