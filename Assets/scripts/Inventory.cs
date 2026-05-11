@@ -85,12 +85,19 @@ public class Inventory : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.F) && isOpen)
         {
-            isOpen = false;
-            justClosed = true;
-            inventoryPanel.SetActive(false);
-            if (crosshair != null) crosshair.SetActive(true);
-            tooltipText.gameObject.SetActive(false);
-            if (boxGrid != null) boxGrid.SetActive(false);
+            if (boxContainer != null && boxContainer.IsOpen)
+            {
+                boxContainer.CloseBox(); // isOpen含め全て CloseFromBox() 経由でリセット
+            }
+            else
+            {
+                isOpen = false;
+                justClosed = true;
+                inventoryPanel.SetActive(false);
+                if (crosshair != null) crosshair.SetActive(true);
+                tooltipText.gameObject.SetActive(false);
+                if (boxGrid != null) boxGrid.SetActive(false);
+            }
             return;
         }
 
@@ -101,6 +108,8 @@ public class Inventory : MonoBehaviour
             if (crosshair != null) crosshair.SetActive(!isOpen);
             tooltipText.gameObject.SetActive(false);
             if (boxGrid != null) boxGrid.SetActive(false);
+            if (!isOpen && boxContainer != null && boxContainer.IsOpen)
+                boxContainer.CloseBox();
             if (isOpen)
                 UpdateInventoryUI();
         }

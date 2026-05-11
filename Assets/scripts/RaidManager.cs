@@ -29,7 +29,7 @@ public class RaidManager : MonoBehaviour
     public void BeginRaid()
     {
         currentState = RaidState.InRaid;
-        Debug.Log("ƒŒƒCƒhŠJn");
+        Debug.Log("ï¿½ï¿½ï¿½Cï¿½hï¿½Jï¿½n");
     }
 
     public void EndRaid(bool isDead)
@@ -40,16 +40,16 @@ public class RaidManager : MonoBehaviour
         {
             inventory.ClearInventory();
 
-            // « ’Ç‰ÁF‘•”õƒXƒƒbƒg‚ğƒNƒŠƒA
+            // ï¿½ï¿½ ï¿½Ç‰ï¿½ï¿½Fï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½bï¿½gï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½A
             EquipmentSlot[] slots = FindObjectsOfType<EquipmentSlot>();
             foreach (EquipmentSlot slot in slots)
                 slot.ForceUnequip();
 
-            Debug.Log("ƒŒƒCƒhI—¹F€–S");
+            Debug.Log("ï¿½ï¿½ï¿½Cï¿½hï¿½Iï¿½ï¿½ï¿½Fï¿½ï¿½ï¿½S");
         }
         else
         {
-            Debug.Log("ƒŒƒCƒhI—¹F‹AŠÒ");
+            Debug.Log("ï¿½ï¿½ï¿½Cï¿½hï¿½Iï¿½ï¿½ï¿½Fï¿½Aï¿½ï¿½");
         }
 
         ResetRaidWorld();
@@ -59,7 +59,12 @@ public class RaidManager : MonoBehaviour
     void ResetRaidWorld()
     {
         enemySpawnManager.ResetEnemies();
-        Debug.Log("ƒ[ƒ‹ƒhƒŠƒZƒbƒgŠ®—¹");
+
+        LootContainer[] containers = FindObjectsOfType<LootContainer>();
+        foreach (LootContainer container in containers)
+            container.ResetContainer();
+
+        Debug.Log("ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒªã‚»ãƒƒãƒˆå®Œäº†");
     }
 
     void ReturnToSafeZone()
