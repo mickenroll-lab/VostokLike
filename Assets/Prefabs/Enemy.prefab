@@ -151,6 +151,9 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   patrolWaitTime: 2
+  curiousRange: 40
+  gunShotSound: {fileID: 8300000, guid: 488f8f77fe9501444887d6a42155ba3f, type: 3}
+  curiousWaitTime: 3
 --- !u!195 &1379803748870326511
 NavMeshAgent:
   m_ObjectHideFlags: 0

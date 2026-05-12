@@ -440,7 +440,8 @@ public class Inventory : MonoBehaviour
                         if (text != null)
                         {
                             text.text = item.amount > 1 ? item.amount.ToString() : "";
-                            text.fontSize = 28;
+                            text.fontSize = 30;
+                            text.color = Color.white;
                             text.alignment = TextAlignmentOptions.BottomRight;
                         }
 

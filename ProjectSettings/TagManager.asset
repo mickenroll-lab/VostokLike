@@ -21,6 +21,7 @@ TagManager:
   - ItemBox
   - Wall
   - LootContainer
+  - StorageContainer
   layers:
   - Default
   - TransparentFX

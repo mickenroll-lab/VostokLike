@@ -8,6 +8,7 @@ public class Gun : MonoBehaviour
 
     public ParticleSystem muzzleFlash;
     public ParticleSystem smokeEffect;
+    public AudioClip gunShotSound;
 
     private WeaponData currentWeapon;
     private int currentAmmo;
@@ -17,6 +18,7 @@ public class Gun : MonoBehaviour
     private Vector3 originalCameraPos;
     public float shakeDuration = 0.1f;
     public float shakeMagnitude = 0.05f;
+    private AudioSource audioSource;
 
 
 
@@ -24,6 +26,9 @@ public class Gun : MonoBehaviour
     {
         mainCamera = Camera.main;
         originalCameraPos = mainCamera.transform.localPosition;
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
         ConfigureParticles();
     }
 
@@ -143,6 +148,8 @@ public class Gun : MonoBehaviour
             muzzleFlash.Play();
         if (smokeEffect != null)
             smokeEffect.Play();
+        if (audioSource != null && gunShotSound != null)
+            audioSource.PlayOneShot(gunShotSound);
 
         if (currentWeapon == null) return;
 

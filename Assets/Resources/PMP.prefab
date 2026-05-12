@@ -143,6 +143,6 @@ MonoBehaviour:
   magazineSize: 8
   currentAmmo: 0
   damage: 35
-  range: 50
+  range: 60
   fireRate: 1
   reloadTime: 2

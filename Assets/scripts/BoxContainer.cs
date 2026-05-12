@@ -300,7 +300,8 @@ public class BoxContainer : MonoBehaviour
                     if (text != null)
                     {
                         text.text = displayCount > 1 ? displayCount.ToString() : "";
-                        text.fontSize = 28;
+                        text.fontSize = 30;
+                        text.color = Color.white;
                         text.alignment = TextAlignmentOptions.BottomRight;
                     }
                 }

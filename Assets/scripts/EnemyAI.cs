@@ -13,9 +13,11 @@ public class EnemyAI : MonoBehaviour
     public Transform[] patrolPoints;
     public float patrolWaitTime = 2f;
     public float curiousRange = 40f;
+    public AudioClip gunShotSound;
     public float curiousWaitTime = 3f;
 
     private float lastAttackTime;
+    private AudioSource audioSource;
     private NavMeshAgent agent;
     private int currentPatrolIndex = 0;
     private float waitTimer = 0f;
@@ -43,6 +45,9 @@ public class EnemyAI : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         player = GameObject.FindWithTag("Player").transform;
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
         currentDetectionRange = detectionRange;
 
         GameObject[] points = GameObject.FindGameObjectsWithTag("PatrolPoint");
@@ -256,6 +261,8 @@ public class EnemyAI : MonoBehaviour
         if (Time.time - lastAttackTime > attackCooldown)
         {
             lastAttackTime = Time.time;
+            if (audioSource != null && gunShotSound != null)
+                audioSource.PlayOneShot(gunShotSound);
             Ray ray = new Ray(transform.position + Vector3.up * 1.5f, dir);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, 50f))
