@@ -54,6 +54,15 @@ public class EnemyAI : MonoBehaviour
             agent.SetDestination(patrolPoints[0].position);
     }
 
+    bool HasLineOfSightToPlayer()
+    {
+        Vector3 dir = (player.position - transform.position).normalized;
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position + Vector3.up, dir, out hit, curiousRange))
+            return hit.collider.CompareTag("Player");
+        return false;
+    }
+
     bool CanSeePlayer()
     {
         Vector3 dir = (player.position - transform.position).normalized;
@@ -85,7 +94,7 @@ public class EnemyAI : MonoBehaviour
                 currentDetectionRange = Mathf.MoveTowards(currentDetectionRange, detectionRange, Time.deltaTime * 5f);
                 if (CanSeePlayer())
                     TransitionTo(State.Chase);
-                else if (dist < curiousRange)
+                else if (dist < curiousRange && HasLineOfSightToPlayer())
                     TransitionTo(State.Curious);
                 else
                     Patrol();

@@ -14,11 +14,11 @@ public class Inventory : MonoBehaviour
         if (boxContainer == null || !boxGrid.activeSelf) return;
         if (specificItem == null || !inventoryItems.Contains(specificItem)) return;
 
-        boxContainer.AddToBox(specificItem.itemName, 1);
+        boxContainer.AddToBox(specificItem.itemName, specificItem.amount);
 
         if (items.ContainsKey(specificItem.itemName))
         {
-            items[specificItem.itemName]--;
+            items[specificItem.itemName] -= specificItem.amount;
             if (items[specificItem.itemName] <= 0)
                 items.Remove(specificItem.itemName);
         }
@@ -51,9 +51,20 @@ public class Inventory : MonoBehaviour
         }
         else
         {
-            // RemoveItemがdictとinventoryItemsの両方を1個削除する
-            boxContainer.AddToBox(itemName, 1);
-            RemoveItem(itemName);
+            InventoryItem target = inventoryItems.Find(i => i.itemName == itemName);
+            int amount = target != null ? target.amount : 1;
+            boxContainer.AddToBox(itemName, amount);
+            if (items.ContainsKey(itemName))
+            {
+                items[itemName] -= amount;
+                if (items[itemName] <= 0)
+                    items.Remove(itemName);
+            }
+            if (target != null)
+            {
+                inventoryGrid.RemoveItem(target.itemId);
+                inventoryItems.Remove(target);
+            }
         }
 
         UpdateInventoryUI();
@@ -66,7 +77,8 @@ public class Inventory : MonoBehaviour
     public GameObject gridCellPrefab;
     public Transform gridParent;
     public ItemManager itemManager;
-    
+    public EquipmentSlot equipmentSlot;
+
     public GameObject crosshair;
     public GameObject dragGhostObject;
 
@@ -436,9 +448,18 @@ public class Inventory : MonoBehaviour
                         InventoryItem capturedItem = item;
                         itemCell.GetComponent<Button>().onClick.AddListener(() => {
                             if (Input.GetKey(KeyCode.LeftShift))
+                            {
                                 MoveToBoxItem(capturedItem);
+                            }
                             else
-                                UseItem(captured);
+                            {
+                                GameObject p = Resources.Load<GameObject>(captured);
+                                ItemData d = p != null ? p.GetComponent<ItemData>() : null;
+                                if (d != null && d.category == ItemData.ItemCategory.Weapon && equipmentSlot != null)
+                                    equipmentSlot.EquipFromInventory(captured);
+                                else
+                                    UseItem(captured);
+                            }
                         });
 
                         string tooltipName = item.itemName;

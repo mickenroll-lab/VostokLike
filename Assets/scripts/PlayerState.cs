@@ -46,6 +46,17 @@ public class PlayerState : MonoBehaviour
             mouseLook.ResetRotation();
     }
 
+    // 帰還時：ステータスを引き継いでカーソルとタイムスケールだけ戻す
+    public void ResumeAfterRaid()
+    {
+        isDead = false;
+        hungerDamagePending = 0f;
+        thirstDamagePending = 0f;
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
     public void TakeDamage(int damage)
     {
         if (isDead) return;

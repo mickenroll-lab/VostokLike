@@ -6,6 +6,7 @@ public class RaidManager : MonoBehaviour
 
     public PlayerState playerState;
     public Inventory inventory;
+    public EquipmentSlot[] equipmentSlots;
     public SpawnManager spawnManager;
     public EnemySpawnManager enemySpawnManager;
     public ResultManager resultManager;
@@ -42,9 +43,8 @@ public class RaidManager : MonoBehaviour
             inventory.ClearInventory();
 
             // �� �ǉ��F�����X���b�g���N���A
-            EquipmentSlot[] slots = FindObjectsOfType<EquipmentSlot>();
-            foreach (EquipmentSlot slot in slots)
-                slot.ForceUnequip();
+            foreach (EquipmentSlot slot in equipmentSlots)
+                if (slot != null) slot.ForceUnequip();
 
             Debug.Log("���C�h�I���F���S");
         }
@@ -54,7 +54,7 @@ public class RaidManager : MonoBehaviour
         }
 
         ResetRaidWorld();
-        ReturnToSafeZone();
+        ReturnToSafeZone(isDead);
     }
 
     void ResetRaidWorld()
@@ -79,9 +79,12 @@ public class RaidManager : MonoBehaviour
         Debug.Log("ワールドリセット完了");
     }
 
-    void ReturnToSafeZone()
+    void ReturnToSafeZone(bool isDead)
     {
-        playerState.ResetState();
+        if (isDead)
+            playerState.ResetState();
+        else
+            playerState.ResumeAfterRaid();
         spawnManager.SpawnAtSafe();
     }
 }

@@ -9,10 +9,10 @@ public class DropTarget : MonoBehaviour, IDropHandler
 
     public void OnDrop(PointerEventData eventData)
     {
-        Debug.Log("OnDropŒÄ‚Î‚ê‚½");
+        Debug.Log("OnDropï¿½Ä‚Î‚ê‚½");
         DraggableItem draggable = eventData.pointerDrag.GetComponent<DraggableItem>();
 
-        // WeaponSlot‚©‚ç‚Ìƒhƒ‰ƒbƒO‚ÍƒS[ƒXƒg©‘Ì‚ªDraggableItem‚ğ‚Â
+        // WeaponSlotï¿½ï¿½ï¿½ï¿½Ìƒhï¿½ï¿½ï¿½bï¿½Oï¿½ÍƒSï¿½[ï¿½Xï¿½gï¿½ï¿½ï¿½Ì‚ï¿½DraggableItemï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (draggable == null)
         {
             EquipmentSlot equipSlot = eventData.pointerDrag.GetComponent<EquipmentSlot>();
@@ -33,7 +33,7 @@ public class DropTarget : MonoBehaviour, IDropHandler
                 }
                 else
                 {
-                    // BoxŒü‚¯
+                    // Boxï¿½ï¿½ï¿½ï¿½
                     boxContainer.AddToBox(unequipItem, 1);
                 }
                 equipSlot.ForceUnequip();
@@ -45,19 +45,20 @@ public class DropTarget : MonoBehaviour, IDropHandler
             return;
         }
 
-        // ƒCƒ“ƒxƒ“ƒgƒŠ¨Box
+        // ï¿½Cï¿½ï¿½ï¿½xï¿½ï¿½ï¿½gï¿½ï¿½ï¿½ï¿½Box
         if (draggable.fromInventory && !isInventory)
         {
             inventory.MoveToBox(draggable.itemName);
             if (draggable.dragGhost != null) draggable.dragGhost.SetActive(false);
             Destroy(eventData.pointerDrag.gameObject);
         }
-        // Box¨ƒCƒ“ƒxƒ“ƒgƒŠ
+        // Boxï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½xï¿½ï¿½ï¿½gï¿½ï¿½
         else if (!draggable.fromInventory && isInventory)
         {
-            // ItemData‚©‚çƒTƒCƒY‚ğæ“¾
+            // ItemDataï¿½ï¿½ï¿½ï¿½Tï¿½Cï¿½Yï¿½ï¿½ï¿½æ“¾
             int itemW = 1;
             int itemH = 1;
+            bool isStackable = false;
             GameObject prefab = Resources.Load<GameObject>(draggable.itemName);
             if (prefab != null)
             {
@@ -66,6 +67,7 @@ public class DropTarget : MonoBehaviour, IDropHandler
                 {
                     itemW = data.gridWidth;
                     itemH = data.gridHeight;
+                    isStackable = data.category == ItemData.ItemCategory.Bullet;
                 }
             }
 
@@ -75,15 +77,17 @@ public class DropTarget : MonoBehaviour, IDropHandler
             }
             else
             {
-                inventory.AddItem(draggable.itemName, itemW, itemH);
-                boxContainer.RemoveFromBox(draggable.itemName, 1);
+                int transferAmount = isStackable ? boxContainer.GetCount(draggable.itemName) : 1;
+                for (int i = 0; i < transferAmount; i++)
+                    inventory.AddItem(draggable.itemName, itemW, itemH);
+                boxContainer.RemoveFromBox(draggable.itemName, transferAmount);
             }
             inventory.UpdateInventoryUI();
             boxContainer.UpdateBoxUI();
             if (draggable.dragGhost != null) draggable.dragGhost.SetActive(false);
             Destroy(eventData.pointerDrag.gameObject);
         }
-        // “¯‚¶ƒOƒŠƒbƒh“à‚Ö‚Ìƒhƒƒbƒv‚Í‰½‚à‚µ‚È‚¢
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½bï¿½hï¿½ï¿½ï¿½Ö‚Ìƒhï¿½ï¿½ï¿½bï¿½vï¿½Í‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È‚ï¿½
         else
         {
             if (draggable.dragGhost != null) draggable.dragGhost.SetActive(false);

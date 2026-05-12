@@ -31,6 +31,7 @@ public class BoxContainer : MonoBehaviour
     private Dictionary<string, int> boxContents = new Dictionary<string, int>();
     private ItemBox currentBox;
     private LootContainer currentLootContainer;
+    private StorageContainer currentStorageContainer;
     private bool isOpen = false;
 
     public bool IsOpen { get { return isOpen; } }
@@ -46,14 +47,17 @@ public class BoxContainer : MonoBehaviour
             currentBox.contents.Remove(itemName);
         if (currentLootContainer != null)
             currentLootContainer.RemoveFromContents(itemName, count);
+        if (currentStorageContainer != null)
+            currentStorageContainer.RemoveFromContents(itemName, count);
         UpdateBoxUI();
         playerInventory.UpdateInventoryUI();
     }
 
     public void OpenBox(Dictionary<string, int> contents, ItemBox box)
     {
-        Debug.Log("BoxContainer.OpenBox(ItemBox) called\n" + System.Environment.StackTrace);
         currentBox = box;
+        currentLootContainer = null;
+        currentStorageContainer = null;
         playerInventory.OpenFromBox();
         if (boxGrid != null) boxGrid.SetActive(true);
         boxContents = new Dictionary<string, int>(contents);
@@ -63,7 +67,9 @@ public class BoxContainer : MonoBehaviour
 
     public void OpenBox(Dictionary<string, int> contents)
     {
-        Debug.Log("BoxContainer.OpenBox() called\n" + System.Environment.StackTrace);
+        currentBox = null;
+        currentLootContainer = null;
+        currentStorageContainer = null;
         playerInventory.OpenFromBox();
         if (boxGrid != null) boxGrid.SetActive(true);
         boxContents = new Dictionary<string, int>(contents);
@@ -78,6 +84,7 @@ public class BoxContainer : MonoBehaviour
         if (boxGrid != null) boxGrid.SetActive(false);
         isOpen = false;
         currentLootContainer = null;
+        currentStorageContainer = null;
         if (playerInventory != null)
             playerInventory.CloseFromBox();
     }
@@ -97,6 +104,8 @@ public class BoxContainer : MonoBehaviour
         }
         if (currentLootContainer != null)
             currentLootContainer.RemoveFromContents(itemName, amount);
+        if (currentStorageContainer != null)
+            currentStorageContainer.RemoveFromContents(itemName, amount);
         UpdateBoxUI();
     }
 
@@ -119,6 +128,8 @@ public class BoxContainer : MonoBehaviour
         }
         if (currentLootContainer != null)
             currentLootContainer.RemoveFromContents(itemName, 1);
+        if (currentStorageContainer != null)
+            currentStorageContainer.RemoveFromContents(itemName, 1);
         UpdateBoxUI();
     }
 
@@ -135,6 +146,8 @@ public class BoxContainer : MonoBehaviour
             else
                 currentBox.contents[itemName] = amount;
         }
+        if (currentStorageContainer != null)
+            currentStorageContainer.AddToContents(itemName, amount);
         UpdateBoxUI();
     }
 
@@ -145,12 +158,31 @@ public class BoxContainer : MonoBehaviour
         gridHeight = height;
         currentBox = null;
         currentLootContainer = lootContainer;
+        currentStorageContainer = null;
         if (playerInventory != null)
             playerInventory.OpenFromBox();
         if (boxGrid != null)
             boxGrid.SetActive(true);
         else
             Debug.LogWarning("BoxContainer.OpenContainer: boxGrid reference is null.");
+        boxContents = new Dictionary<string, int>(contents);
+        isOpen = true;
+        UpdateBoxUI();
+    }
+
+    public void OpenStorage(Dictionary<string, int> contents, int width, int height, StorageContainer storageContainer)
+    {
+        gridWidth = width;
+        gridHeight = height;
+        currentBox = null;
+        currentLootContainer = null;
+        currentStorageContainer = storageContainer;
+        if (playerInventory != null)
+            playerInventory.OpenFromBox();
+        if (boxGrid != null)
+            boxGrid.SetActive(true);
+        else
+            Debug.LogWarning("BoxContainer.OpenStorage: boxGrid reference is null.");
         boxContents = new Dictionary<string, int>(contents);
         isOpen = true;
         UpdateBoxUI();
@@ -176,7 +208,6 @@ public class BoxContainer : MonoBehaviour
 
             int count = boxContents[itemName];
 
-            // Bullet（弾薬）のみスタック表示、Consumable・Weaponは個別セル
             bool isStackable = false;
             GameObject checkPrefab = Resources.Load<GameObject>(itemName);
             if (checkPrefab != null)
@@ -262,6 +293,7 @@ public class BoxContainer : MonoBehaviour
                 Image cellImage = cell.GetComponent<Image>();
                 cellImage.color = new Color(0.3f, 0.4f, 0.5f, 0.8f);
 
+                // メインセルのみカウントテキストを表示
                 if (dx == 0 && dy == 0)
                 {
                     TextMeshProUGUI text = cell.GetComponentInChildren<TextMeshProUGUI>();
@@ -271,44 +303,46 @@ public class BoxContainer : MonoBehaviour
                         text.fontSize = 28;
                         text.alignment = TextAlignmentOptions.BottomRight;
                     }
-
-                    string captured = itemName;
-                    Button btn = cell.GetComponent<Button>();
-                    btn.onClick.AddListener(() =>
-                    {
-                        if (Input.GetKey(KeyCode.LeftShift))
-                            MoveToPlayer(captured, true);
-                        else
-                            PrimaryAction(captured);
-                    });
-
-                    string tooltipName = itemName;
-                    EventTrigger trigger = cell.AddComponent<EventTrigger>();
-
-                    EventTrigger.Entry enterEntry = new EventTrigger.Entry();
-                    enterEntry.eventID = EventTriggerType.PointerEnter;
-                    enterEntry.callback.AddListener((data) =>
-                    {
-                        if (tooltipText != null) tooltipText.gameObject.SetActive(true);
-                        if (tooltipText != null) tooltipText.text = tooltipName;
-                    });
-                    trigger.triggers.Add(enterEntry);
-
-                    EventTrigger.Entry exitEntry = new EventTrigger.Entry();
-                    exitEntry.eventID = EventTriggerType.PointerExit;
-                    exitEntry.callback.AddListener((data) =>
-                    {
-                        if (tooltipText != null) tooltipText.gameObject.SetActive(false);
-                    });
-                    trigger.triggers.Add(exitEntry);
-
-                    DraggableItem draggable = cell.AddComponent<DraggableItem>();
-                    draggable.itemName = itemName;
-                    draggable.fromInventory = false;
-                    draggable.inventory = playerInventory;
-                    draggable.boxContainer = this;
-                    draggable.dragGhost = dragGhostObject;
                 }
+
+                // 全セルにButton・EventTrigger・DraggableItemをアタッチ
+                string captured = itemName;
+                Button btn = cell.GetComponent<Button>();
+                btn.onClick.AddListener(() =>
+                {
+                    if (Input.GetKey(KeyCode.LeftShift))
+                        MoveToPlayer(captured, true);
+                    else
+                        PrimaryAction(captured);
+                });
+
+                string tooltipName = itemName;
+                EventTrigger trigger = cell.AddComponent<EventTrigger>();
+
+                EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+                enterEntry.eventID = EventTriggerType.PointerEnter;
+                enterEntry.callback.AddListener((data) =>
+                {
+                    if (tooltipText != null) tooltipText.gameObject.SetActive(true);
+                    if (tooltipText != null) tooltipText.text = tooltipName;
+                });
+                trigger.triggers.Add(enterEntry);
+
+                EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+                exitEntry.eventID = EventTriggerType.PointerExit;
+                exitEntry.callback.AddListener((data) =>
+                {
+                    if (tooltipText != null) tooltipText.gameObject.SetActive(false);
+                });
+                trigger.triggers.Add(exitEntry);
+
+                DraggableItem draggable = cell.AddComponent<DraggableItem>();
+                draggable.itemName = itemName;
+                draggable.fromInventory = false;
+                draggable.inventory = playerInventory;
+                draggable.boxContainer = this;
+                draggable.dragGhost = dragGhostObject;
+
                 cellIndex++;
             }
 
@@ -319,8 +353,7 @@ public class BoxContainer : MonoBehaviour
                 GameObject prefab = Resources.Load<GameObject>(itemName);
                 ItemData data = prefab != null ? prefab.GetComponent<ItemData>() : null;
 
-                int amount = 1;
-
+                int amount = boxContents[itemName];
                 int itemW = data != null ? data.gridWidth : 1;
                 int itemH = data != null ? data.gridHeight : 1;
 
@@ -337,9 +370,10 @@ public class BoxContainer : MonoBehaviour
                     if (currentBox.contents[itemName] <= 0)
                         currentBox.contents.Remove(itemName);
                 }
-
                 if (currentLootContainer != null)
                     currentLootContainer.RemoveFromContents(itemName, amount);
+                if (currentStorageContainer != null)
+                    currentStorageContainer.RemoveFromContents(itemName, amount);
 
                 UpdateBoxUI();
                 playerInventory.UpdateInventoryUI();

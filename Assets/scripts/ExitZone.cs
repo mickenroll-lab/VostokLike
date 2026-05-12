@@ -23,16 +23,16 @@ public class ExitZone : MonoBehaviour
             spawnManager = FindObjectOfType<SpawnManager>();
         if (inventory == null)
             inventory = FindObjectOfType<Inventory>();
-        // �ȉ���������
 
         if (Input.GetKeyDown(KeyCode.F))
         {
-            Debug.Log("F�L�[������");
+            Debug.Log("Fキー押下");
             Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, interactRange))
             {
-                Debug.Log("Raycast�q�b�g: " + hit.collider.name + " tag: " + hit.collider.tag);
+                Debug.Log("Raycastヒット: " + hit.collider.name + " tag: " + hit.collider.tag);
+
                 if (hit.collider.CompareTag("ExitIn"))
                 {
                     RaidManager.Instance.BeginRaid();
@@ -48,20 +48,25 @@ public class ExitZone : MonoBehaviour
                     RaidManager.Instance.EndRaid(false);
                     isExiting = false;
                 }
-                if (hit.collider.tag == "LootContainer")
+                else if (hit.collider.CompareTag("LootContainer"))
                 {
-                    Debug.Log("LootContainer������");
+                    Debug.Log("LootContainerインタラクト");
                     LootContainer lootContainer = hit.collider.GetComponent<LootContainer>();
-                    Debug.Log("LootContainer�擾: " + lootContainer);
                     if (lootContainer != null)
                         lootContainer.Interact();
                 }
+                else if (hit.collider.CompareTag("StorageContainer"))
+                {
+                    Debug.Log("StorageContainerインタラクト");
+                    StorageContainer storageContainer = hit.collider.GetComponent<StorageContainer>();
+                    if (storageContainer != null)
+                        storageContainer.Interact();
+                }
                 else
                 {
-                    Debug.Log("��v���Ȃ����� tag=[" + hit.collider.tag + "]");
+                    Debug.Log("一致しないタグ tag=[" + hit.collider.tag + "]");
                 }
             }
         }
-
     }
-} 
+}
