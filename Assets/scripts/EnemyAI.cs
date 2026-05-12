@@ -12,6 +12,8 @@ public class EnemyAI : MonoBehaviour
     public float attackCooldown = 1.5f;
     public Transform[] patrolPoints;
     public float patrolWaitTime = 2f;
+    public float curiousRange = 40f;
+    public float curiousWaitTime = 3f;
 
     private float lastAttackTime;
     private NavMeshAgent agent;
@@ -19,20 +21,23 @@ public class EnemyAI : MonoBehaviour
     private float waitTimer = 0f;
     private bool isWaiting = false;
 
-    private enum State { Patrol, Alert, Search, Chase, Attack }
+    private enum State { Patrol, Alert, Search, Chase, Attack, Curious }
     private State currentState = State.Patrol;
 
-    // 状態タイマー
     private float searchTimer = 0f;
     private float alertTimer = 0f;
     private const float searchDuration = 20f;
     private const float alertDuration = 20f;
 
-    // ロストポイント
     private Vector3 lostPoint;
-
-    // DetectionRange の補間用
     private float currentDetectionRange;
+
+    // Curious state
+    private Vector3 curiousPoint;
+    private Vector3 curiousOriginPoint;
+    private float curiousWaitTimer = 0f;
+    private bool curiousWaiting = false;
+    private bool curiousReturning = false;
 
     void Start()
     {
@@ -80,8 +85,43 @@ public class EnemyAI : MonoBehaviour
                 currentDetectionRange = Mathf.MoveTowards(currentDetectionRange, detectionRange, Time.deltaTime * 5f);
                 if (CanSeePlayer())
                     TransitionTo(State.Chase);
+                else if (dist < curiousRange)
+                    TransitionTo(State.Curious);
                 else
                     Patrol();
+                break;
+
+            case State.Curious:
+                currentDetectionRange = Mathf.MoveTowards(currentDetectionRange, detectionRange, Time.deltaTime * 5f);
+                if (CanSeePlayer())
+                {
+                    TransitionTo(State.Chase);
+                    break;
+                }
+                if (curiousReturning)
+                {
+                    if (agent.remainingDistance < 0.5f && !agent.pathPending)
+                        TransitionTo(State.Patrol);
+                }
+                else if (curiousWaiting)
+                {
+                    curiousWaitTimer -= Time.deltaTime;
+                    if (curiousWaitTimer <= 0f)
+                    {
+                        curiousWaiting = false;
+                        curiousReturning = true;
+                        agent.SetDestination(curiousOriginPoint);
+                    }
+                }
+                else
+                {
+                    if (agent.remainingDistance < 1.5f && !agent.pathPending)
+                    {
+                        curiousWaiting = true;
+                        curiousWaitTimer = curiousWaitTime;
+                        agent.ResetPath();
+                    }
+                }
                 break;
 
             case State.Alert:
@@ -92,7 +132,7 @@ public class EnemyAI : MonoBehaviour
                 else if (alertTimer <= 0f)
                     TransitionTo(State.Patrol);
                 else
-                    Patrol(); // Alert中も巡回継続
+                    Patrol();
                 break;
 
             case State.Search:
@@ -135,10 +175,18 @@ public class EnemyAI : MonoBehaviour
 
     void TransitionTo(State newState)
     {
-        Debug.Log($"[EnemyAI] {currentState} → {newState}");
+        Debug.Log($"[EnemyAI] {currentState} -> {newState}");
         currentState = newState;
         switch (newState)
         {
+            case State.Curious:
+                curiousPoint = player.position;
+                curiousOriginPoint = transform.position;
+                curiousWaiting = false;
+                curiousReturning = false;
+                curiousWaitTimer = curiousWaitTime;
+                agent.SetDestination(curiousPoint);
+                break;
             case State.Search:
                 searchTimer = searchDuration;
                 agent.SetDestination(lostPoint);
@@ -147,6 +195,7 @@ public class EnemyAI : MonoBehaviour
                 alertTimer = alertDuration;
                 break;
             case State.Patrol:
+                isWaiting = false;
                 if (patrolPoints.Length > 0)
                     agent.SetDestination(patrolPoints[currentPatrolIndex].position);
                 break;
@@ -176,7 +225,6 @@ public class EnemyAI : MonoBehaviour
 
     void Search()
     {
-        // ロストポイント付近をランダムに索敵
         if (agent.remainingDistance < 0.5f && !agent.pathPending)
         {
             Vector3 randomOffset = new Vector3(

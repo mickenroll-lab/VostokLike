@@ -10,6 +10,13 @@ public class PlayerMove : MonoBehaviour
     public float yVelocity;
     public Animator animator;
 
+    private PlayerState playerState;
+
+    void Awake()
+    {
+        playerState = GetComponent<PlayerState>();
+    }
+
     void Update()
     {
         Inventory inventory = GetComponent<Inventory>();
@@ -20,7 +27,8 @@ public class PlayerMove : MonoBehaviour
         float z = Input.GetAxis("Vertical");
         Vector3 move = transform.right * x + transform.forward * z;
 
-        float currentSpeed = Input.GetKey(KeyCode.LeftShift) ? sprintSpeed : speed;
+        bool canSprint = playerState == null || playerState.stamina > 0;
+        float currentSpeed = (Input.GetKey(KeyCode.LeftShift) && canSprint) ? sprintSpeed : speed;
 
         if (controller.isGrounded)
         {

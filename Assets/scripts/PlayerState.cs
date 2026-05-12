@@ -14,15 +14,18 @@ public class PlayerState : MonoBehaviour
     public float hungerMax = 100f;
     public float thirstMax = 100f;
 
-    public float hungerDecayRate = 0.1f;  // 1•b‚ ‚½‚è‚ÌŒ¸­—Ê
-    public float thirstDecayRate = 0.15f; 
-    
+    public float hungerDecayRate = 0.1f;
+    public float thirstDecayRate = 0.15f;
+    public float staminaDecayRate = 5f;
+    public float staminaRecoveryRate = 10f;
+
     public string currentItem = "";
     public int hp = 100;
     public GameObject deathPanel;
 
-    // ƒtƒB[ƒ‹ƒh‚É’Ç‰Á
     private bool isDead = false;
+    private float hungerDamagePending = 0f;
+    private float thirstDamagePending = 0f;
 
     public void ResetState()
     {
@@ -30,6 +33,9 @@ public class PlayerState : MonoBehaviour
         hp = 100;
         hunger = hungerMax;
         thirst = thirstMax;
+        stamina = staminaMax;
+        hungerDamagePending = 0f;
+        thirstDamagePending = 0f;
         deathPanel.SetActive(false);
         Time.timeScale = 1f;
         Cursor.lockState = CursorLockMode.Locked;
@@ -42,12 +48,12 @@ public class PlayerState : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        if (isDead) return; // © ’Ç‰Á
+        if (isDead) return;
         hp -= damage;
-        Debug.Log("ƒvƒŒƒCƒ„[HPF" + hp);
+        Debug.Log("ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼HPï¼š" + hp);
         if (hp <= 0)
         {
-            isDead = true; // © ’Ç‰Á
+            isDead = true;
             Die();
         }
     }
@@ -55,7 +61,6 @@ public class PlayerState : MonoBehaviour
     void Start()
     {
         Debug.Log("deathPanel.activeSelf=" + deathPanel.activeSelf);
-        // Šù‚É‘¶İ‚·‚éê‡‚Í©•ª‚ğíœ
         PlayerState[] players = FindObjectsOfType<PlayerState>();
         if (players.Length > 1)
         {
@@ -64,25 +69,68 @@ public class PlayerState : MonoBehaviour
         }
         DontDestroyOnLoad(gameObject);
     }
+
     void Update()
     {
-        // ‹Q‚¦‚ÆŠ‰‚«‚ÍŠÔ‚ÅŒ¸­
         hunger -= hungerDecayRate * Time.deltaTime;
         thirst -= thirstDecayRate * Time.deltaTime;
 
         hunger = Mathf.Clamp(hunger, 0, hungerMax);
         thirst = Mathf.Clamp(thirst, 0, thirstMax);
 
-        // 0‚É‚È‚Á‚½‚çƒ_ƒ[ƒW
+        // ã‚¹ã‚¿ãƒŸãƒŠå¢—æ¸›ï¼ˆLeftShift + ç§»å‹•å…¥åŠ›ãŒã‚ã‚‹ã¨ãã®ã¿æ¸›å°‘ï¼‰
+        bool hasMovement = Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0 || Mathf.Abs(Input.GetAxisRaw("Vertical")) > 0;
+        bool isSprinting = Input.GetKey(KeyCode.LeftShift) && hasMovement;
+        if (isSprinting)
+        {
+            stamina -= staminaDecayRate * Time.deltaTime;
+            thirst -= staminaDecayRate * 0.05f * Time.deltaTime;
+        }
+        else
+            stamina += staminaRecoveryRate * Time.deltaTime;
+        stamina = Mathf.Clamp(stamina, 0f, staminaMax);
+
+        // é£¢é¤“ãƒ»æ¸‡ããƒ€ãƒ¡ãƒ¼ã‚¸ï¼ˆãƒ•ãƒ¬ãƒ¼ãƒ ãƒ¬ãƒ¼ãƒˆéä¾å­˜ï¼‰
+        bool bothEmpty = hunger <= 0 && thirst <= 0;
+
         if (hunger <= 0)
-            TakeDamage(1);
+        {
+            float rate = bothEmpty ? 1f : 0.5f;
+            hungerDamagePending += rate * Time.deltaTime;
+        }
+        else
+        {
+            hungerDamagePending = 0f;
+        }
+
         if (thirst <= 0)
-            TakeDamage(2);
+        {
+            float rate = bothEmpty ? 2f : 1f;
+            thirstDamagePending += rate * Time.deltaTime;
+        }
+        else
+        {
+            thirstDamagePending = 0f;
+        }
+
+        if (hungerDamagePending >= 1f)
+        {
+            int dmg = (int)hungerDamagePending;
+            hungerDamagePending -= dmg;
+            TakeDamage(dmg);
+        }
+        if (thirstDamagePending >= 1f)
+        {
+            int dmg = (int)thirstDamagePending;
+            thirstDamagePending -= dmg;
+            TakeDamage(dmg);
+        }
     }
+
     void Die()
     {
-        Debug.Log("DieŒÄ‚Î‚ê‚½ deathPanel=" + deathPanel);
-        deathPanel.SetActive(true); // © 1‚Â‚¾‚¯c‚·
+        Debug.Log("Dieå‘¼ã°ã‚ŒãŸ deathPanel=" + deathPanel);
+        deathPanel.SetActive(true);
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -92,5 +140,5 @@ public class PlayerState : MonoBehaviour
     {
         RaidManager.Instance.EndRaid(true);
     }
-    
+
 }
