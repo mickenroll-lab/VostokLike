@@ -22,10 +22,13 @@ public class PlayerState : MonoBehaviour
     public string currentItem = "";
     public int hp = 100;
     public GameObject deathPanel;
+    public UnityEngine.UI.Image damageVignette;
 
     private bool isDead = false;
     private float hungerDamagePending = 0f;
     private float thirstDamagePending = 0f;
+    private float vignetteTimer = 0f;
+    private const float vignetteDuration = 1f;
 
     public void ResetState()
     {
@@ -61,6 +64,7 @@ public class PlayerState : MonoBehaviour
     {
         if (isDead) return;
         hp -= damage;
+        vignetteTimer = vignetteDuration;
         Debug.Log("プレイヤーHP：" + hp);
         if (hp <= 0)
         {
@@ -79,6 +83,31 @@ public class PlayerState : MonoBehaviour
             return;
         }
         DontDestroyOnLoad(gameObject);
+
+        if (damageVignette != null)
+        {
+            damageVignette.sprite = CreateVignetteSprite(256);
+            damageVignette.color = new Color(1f, 0f, 0f, 0f);
+        }
+    }
+
+    Sprite CreateVignetteSprite(int size)
+    {
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        Vector2 center = new Vector2(0.5f, 0.5f);
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Vector2 uv = new Vector2((float)x / size, (float)y / size);
+                float dist = Vector2.Distance(uv, center) * 2f;
+                dist = Mathf.Clamp01(dist);
+                float alpha = dist * dist * dist;
+                tex.SetPixel(x, y, new Color(1f, 0f, 0f, alpha));
+            }
+        }
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
     }
 
     void Update()
@@ -136,11 +165,31 @@ public class PlayerState : MonoBehaviour
             thirstDamagePending -= dmg;
             TakeDamage(dmg);
         }
+
+        UpdateVignette();
+    }
+
+    void UpdateVignette()
+    {
+        if (damageVignette == null) return;
+        if (vignetteTimer > 0f)
+        {
+            vignetteTimer -= Time.deltaTime;
+            float alpha = Mathf.Clamp01(vignetteTimer / vignetteDuration);
+            damageVignette.color = new Color(1f, 0f, 0f, alpha);
+        }
+        else
+        {
+            damageVignette.color = new Color(1f, 0f, 0f, 0f);
+        }
     }
 
     void Die()
     {
         Debug.Log("Die呼ばれた deathPanel=" + deathPanel);
+        vignetteTimer = 0f;
+        if (damageVignette != null)
+            damageVignette.color = new Color(1f, 0f, 0f, 0f);
         deathPanel.SetActive(true);
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;

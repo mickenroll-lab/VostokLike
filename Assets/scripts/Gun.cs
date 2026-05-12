@@ -7,6 +7,7 @@ public class Gun : MonoBehaviour
     public GameObject hitEffectPrefab;
 
     public ParticleSystem muzzleFlash;
+    public ParticleSystem smokeEffect;
 
     private WeaponData currentWeapon;
     private int currentAmmo;
@@ -23,6 +24,76 @@ public class Gun : MonoBehaviour
     {
         mainCamera = Camera.main;
         originalCameraPos = mainCamera.transform.localPosition;
+        ConfigureParticles();
+    }
+
+    void ConfigureParticles()
+    {
+        if (muzzleFlash != null)
+        {
+            muzzleFlash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = muzzleFlash.main;
+            main.duration = 0.05f;
+            main.loop = false;
+            main.startLifetime = 0.05f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(2f, 4f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.2f);
+            main.startColor = new ParticleSystem.MinMaxGradient(Color.white, new Color(1f, 0.95f, 0.7f));
+            main.maxParticles = 30;
+
+            var emission = muzzleFlash.emission;
+            emission.rateOverTime = 0;
+            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 20) });
+
+            var shape = muzzleFlash.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 25f;
+            shape.radius = 0.01f;
+
+            Shader glowShader = Shader.Find("Legacy Shaders/Particles/Additive");
+            if (glowShader == null) glowShader = Shader.Find("Particles/Additive");
+            if (glowShader != null)
+                muzzleFlash.GetComponent<Renderer>().material = new Material(glowShader);
+        }
+
+        if (smokeEffect != null)
+        {
+            smokeEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = smokeEffect.main;
+            main.duration = 0.5f;
+            main.loop = false;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1f, 2f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.2f, 0.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.1f);
+            main.startColor = new Color(0.7f, 0.7f, 0.7f, 0.4f);
+            main.gravityModifier = -0.05f;
+            main.maxParticles = 15;
+
+            var emission = smokeEffect.emission;
+            emission.rateOverTime = 0;
+            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 5) });
+
+            var shape = smokeEffect.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.02f;
+
+            var col = smokeEffect.colorOverLifetime;
+            col.enabled = true;
+            Gradient grad = new Gradient();
+            grad.SetKeys(
+                new GradientColorKey[] {
+                    new GradientColorKey(new Color(0.7f, 0.7f, 0.7f), 0f),
+                    new GradientColorKey(new Color(0.7f, 0.7f, 0.7f), 1f)
+                },
+                new GradientAlphaKey[] {
+                    new GradientAlphaKey(0.4f, 0f),
+                    new GradientAlphaKey(0f, 1f)
+                }
+            );
+            col.color = grad;
+        }
     }
 
     void Update()
@@ -31,7 +102,6 @@ public class Gun : MonoBehaviour
         if (state == null) return;
         if (state.currentItem == "") return;
 
-        // ƒCƒ“ƒxƒ“ƒgƒŠ‚ªŠJ‚¢‚Ä‚¢‚½‚çŽËŒ‚•s‰Â
         if (inventory != null && inventory.inventoryPanel.activeSelf) return;
         if (state.deathPanel != null && state.deathPanel.activeSelf) return;
 
@@ -47,7 +117,7 @@ public class Gun : MonoBehaviour
         {
             if (currentAmmo <= 0)
             {
-                Debug.Log("’e‚ª‚È‚¢I");
+                Debug.Log("å¼¾ãŒãªã„ï¼");
                 return;
             }
             Shoot();
@@ -58,7 +128,7 @@ public class Gun : MonoBehaviour
     {
         currentWeapon = weapon;
         currentAmmo = weapon.magazineSize;
-        Debug.Log("‘•”õF" + weapon.weaponName);
+        Debug.Log("è£…å‚™ï¼š" + weapon.weaponName);
     }
 
     public void Unequip()
@@ -71,19 +141,20 @@ public class Gun : MonoBehaviour
     {
         if (muzzleFlash != null)
             muzzleFlash.Play();
+        if (smokeEffect != null)
+            smokeEffect.Play();
 
         if (currentWeapon == null) return;
 
         currentAmmo--;
-        Debug.Log("Žc’eF" + currentAmmo);
+        Debug.Log("æ®‹å¼¾ï¼š" + currentAmmo);
 
         Ray ray = Camera.main.ScreenPointToRay(new Vector2(Screen.width / 2, Screen.height / 2));
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, currentWeapon.range))
         {
-            Debug.Log("Raycastƒqƒbƒg: " + hit.collider.name + " tag: " + hit.collider.tag);
-            // ˆÈ‰ºŠù‘¶ˆ—
+            Debug.Log("Raycastãƒ’ãƒƒãƒˆ: " + hit.collider.name + " tag: " + hit.collider.tag);
             if (hitEffectPrefab != null)
             {
                 GameObject effect = Instantiate(hitEffectPrefab, hit.point, Quaternion.identity);
@@ -113,12 +184,12 @@ public class Gun : MonoBehaviour
         if (currentWeapon == null) yield break;
         if (!inventory.HasAmmo(currentWeapon.ammoType))
         {
-            Debug.Log("Ammo‚ª‚È‚¢I");
+            Debug.Log("AmmoãŒãªã„ï¼");
             yield break;
         }
 
         isReloading = true;
-        Debug.Log("ƒŠƒ[ƒh’†...");
+        Debug.Log("ãƒªãƒ­ãƒ¼ãƒ‰ä¸­...");
         yield return new WaitForSeconds(currentWeapon.reloadTime);
 
         int needed = currentWeapon.magazineSize - currentAmmo;
@@ -130,6 +201,6 @@ public class Gun : MonoBehaviour
 
         currentAmmo = currentWeapon.magazineSize;
         isReloading = false;
-        Debug.Log("ƒŠƒ[ƒhŠ®—¹I");
+        Debug.Log("ãƒªãƒ­ãƒ¼ãƒ‰å®Œäº†ï¼");
     }
 }

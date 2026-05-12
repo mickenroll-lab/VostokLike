@@ -35,6 +35,7 @@ public class ExitZone : MonoBehaviour
 
                 if (hit.collider.CompareTag("ExitIn"))
                 {
+                    if (RaidManager.Instance == null) { Debug.LogError("RaidManager.Instance is null"); return; }
                     RaidManager.Instance.BeginRaid();
                     spawnManager.SpawnAtField();
                     resultManager.StartMission();
@@ -42,6 +43,7 @@ public class ExitZone : MonoBehaviour
                 else if (hit.collider.CompareTag("ExitOut"))
                 {
                     if (isExiting) return;
+                    if (RaidManager.Instance == null) { Debug.LogError("RaidManager.Instance is null"); return; }
                     isExiting = true;
                     int totalValue = inventory.CalculateTotalValue();
                     resultManager.ShowResult(totalValue);
