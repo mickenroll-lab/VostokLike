@@ -6,7 +6,7 @@ public class InventoryGrid : MonoBehaviour
     public int width = 10;
     public int height = 12;
 
-    // ƒOƒŠƒbƒhƒf[ƒ^FŠeƒZƒ‹‚É‰½‚ª“ü‚Á‚Ä‚¢‚é‚©inull‚È‚ç‹ój
+    // ï¿½Oï¿½ï¿½ï¿½bï¿½hï¿½fï¿½[ï¿½^ï¿½Fï¿½eï¿½Zï¿½ï¿½ï¿½É‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½é‚©ï¿½inullï¿½È‚ï¿½ï¿½j
     private string[,] grid;
 
     public void Initialize()
@@ -14,9 +14,10 @@ public class InventoryGrid : MonoBehaviour
         grid = new string[width, height];
     }
 
-    // ƒAƒCƒeƒ€‚ð”z’u‚Å‚«‚é‚©Šm”F
+    // ï¿½Aï¿½Cï¿½eï¿½ï¿½ï¿½ï¿½zï¿½uï¿½Å‚ï¿½ï¿½é‚©ï¿½mï¿½F
     public bool CanPlace(int x, int y, int itemWidth, int itemHeight)
     {
+        if (grid == null) Initialize();
         if (x + itemWidth > width || y + itemHeight > height) return false;
 
         for (int dx = 0; dx < itemWidth; dx++)
@@ -29,7 +30,7 @@ public class InventoryGrid : MonoBehaviour
         return true;
     }
 
-    // ƒAƒCƒeƒ€‚ð”z’u
+    // ï¿½Aï¿½Cï¿½eï¿½ï¿½ï¿½ï¿½zï¿½u
     public bool PlaceItem(string itemId, int x, int y, int itemWidth, int itemHeight)
     {
         if (!CanPlace(x, y, itemWidth, itemHeight)) return false;
@@ -44,7 +45,7 @@ public class InventoryGrid : MonoBehaviour
         return true;
     }
 
-    // ƒAƒCƒeƒ€‚ðíœ
+    // ï¿½Aï¿½Cï¿½eï¿½ï¿½ï¿½ï¿½ï¿½íœ
     public void RemoveItem(string itemId)
     {
         for (int x = 0; x < width; x++)
@@ -64,7 +65,7 @@ public class InventoryGrid : MonoBehaviour
                 grid[x, y] = null;
     }
 
-    // ‹ó‚«ƒXƒy[ƒX‚ðŽ©“®ŒŸõ
+    // ï¿½ó‚«ƒXï¿½yï¿½[ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     public bool FindFreeSpace(int itemWidth, int itemHeight, out int foundX, out int foundY)
     {
         for (int y = 0; y < height; y++)

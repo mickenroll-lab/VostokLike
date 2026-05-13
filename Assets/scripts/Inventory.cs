@@ -95,6 +95,7 @@ public class Inventory : MonoBehaviour
     public Dictionary<string, int> items = new Dictionary<string, int>();
 
     public bool justClosed = false;
+    private InventoryItem hoveredItem = null;
 
     void Awake()
     {
@@ -148,6 +149,39 @@ public class Inventory : MonoBehaviour
             if (isOpen)
                 UpdateInventoryUI();
         }
+
+    }
+
+    void DropItem(InventoryItem item)
+    {
+        if (item == null || !inventoryItems.Contains(item)) return;
+
+        Transform cam = Camera.main.transform;
+        Vector3 spawnPos = cam.position + cam.forward * 1.5f;
+
+        GameObject dropped = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        dropped.transform.position = spawnPos;
+        dropped.transform.localScale = Vector3.one * 0.3f;
+
+        DroppedItem di = dropped.AddComponent<DroppedItem>();
+        di.itemName = item.itemName;
+        di.amount = item.amount;
+
+        Rigidbody rb = dropped.AddComponent<Rigidbody>();
+        rb.AddForce(cam.forward * 3f + Vector3.up * 1f, ForceMode.Impulse);
+
+        if (items.ContainsKey(item.itemName))
+        {
+            items[item.itemName] -= item.amount;
+            if (items[item.itemName] <= 0)
+                items.Remove(item.itemName);
+        }
+
+        inventoryGrid.RemoveItem(item.itemId);
+        inventoryItems.Remove(item);
+
+        hoveredItem = null;
+        UpdateInventoryUI();
     }
 
     public void OpenFromBox()
@@ -448,10 +482,10 @@ public class Inventory : MonoBehaviour
                         string captured = item.itemName;
                         InventoryItem capturedItem = item;
                         itemCell.GetComponent<Button>().onClick.AddListener(() => {
-                            if (Input.GetKey(KeyCode.LeftShift))
-                            {
+                            if (Input.GetKey(KeyCode.LeftControl))
+                                DropItem(capturedItem);
+                            else if (Input.GetKey(KeyCode.LeftShift))
                                 MoveToBoxItem(capturedItem);
-                            }
                             else
                             {
                                 GameObject p = Resources.Load<GameObject>(captured);
@@ -471,6 +505,7 @@ public class Inventory : MonoBehaviour
                         enterEntry.callback.AddListener((data) => {
                             tooltipText.gameObject.SetActive(true);
                             tooltipText.text = tooltipName;
+                            hoveredItem = capturedItem;
                         });
                         trigger.triggers.Add(enterEntry);
 
@@ -478,6 +513,7 @@ public class Inventory : MonoBehaviour
                         exitEntry.eventID = EventTriggerType.PointerExit;
                         exitEntry.callback.AddListener((data) => {
                             tooltipText.gameObject.SetActive(false);
+                            hoveredItem = null;
                         });
                         trigger.triggers.Add(exitEntry);
 

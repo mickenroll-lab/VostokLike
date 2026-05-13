@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(git *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "PowerShell($content = Get-Content \"C:\\\\Users\\\\user\\\\My project \\(1\\)\\\\STREAMINGDocs\\\\Summaried_transcript_day10.txt\" -Encoding UTF8; Write-Host \"Total lines: $\\($content.Count\\)\")",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\user\\\\My project \\(1\\)\\\\STREAMINGDocs\" -Force)",
+      "Bash(Format-List Name, LastWriteTime, Length)",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
     ]
   }
 }

@@ -66,7 +66,11 @@ public class ExitZone : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("一致しないタグ tag=[" + hit.collider.tag + "]");
+                    DroppedItem droppedItem = hit.collider.GetComponent<DroppedItem>();
+                    if (droppedItem != null)
+                        droppedItem.Pickup();
+                    else
+                        Debug.Log("一致しないタグ tag=[" + hit.collider.tag + "]");
                 }
             }
         }

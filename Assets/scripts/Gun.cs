@@ -109,6 +109,7 @@ public class Gun : MonoBehaviour
 
         if (inventory != null && inventory.inventoryPanel.activeSelf) return;
         if (state.deathPanel != null && state.deathPanel.activeSelf) return;
+        if (RaidManager.Instance != null && RaidManager.Instance.resultManager != null && RaidManager.Instance.resultManager.resultPanel.activeSelf) return;
 
         if (isReloading) return;
 
@@ -120,6 +121,7 @@ public class Gun : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            if (ItemGrabber.Instance != null && ItemGrabber.Instance.IsHolding) return;
             if (currentAmmo <= 0)
             {
                 Debug.Log("弾がない！");
