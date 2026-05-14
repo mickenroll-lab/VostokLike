@@ -21,6 +21,7 @@ public class PlayerState : MonoBehaviour
 
     public string currentItem = "";
     public int hp = 100;
+    public int hpMax = 100;
     public GameObject deathPanel;
     public UnityEngine.UI.Image damageVignette;
 
@@ -33,7 +34,7 @@ public class PlayerState : MonoBehaviour
     public void ResetState()
     {
         isDead = false;
-        hp = 100;
+        hp = hpMax;
         hunger = hungerMax;
         thirst = thirstMax;
         stamina = staminaMax;
@@ -64,7 +65,8 @@ public class PlayerState : MonoBehaviour
     {
         if (isDead) return;
         hp -= damage;
-        vignetteTimer = vignetteDuration;
+        if (ScreenFade.State == ScreenState.Normal)
+            vignetteTimer = vignetteDuration;
         Debug.Log("プレイヤーHP：" + hp);
         if (hp <= 0)
         {
@@ -172,6 +174,7 @@ public class PlayerState : MonoBehaviour
     void UpdateVignette()
     {
         if (damageVignette == null) return;
+        if (ScreenFade.State == ScreenState.Sleeping) return;
         if (vignetteTimer > 0f)
         {
             vignetteTimer -= Time.deltaTime;
@@ -194,6 +197,13 @@ public class PlayerState : MonoBehaviour
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+
+    public void ClearVignette()
+    {
+        vignetteTimer = 0f;
+        if (damageVignette != null)
+            damageVignette.color = new Color(1f, 0f, 0f, 0f);
     }
 
     public void Respawn()

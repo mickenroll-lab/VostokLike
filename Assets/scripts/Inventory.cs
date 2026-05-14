@@ -119,6 +119,8 @@ public class Inventory : MonoBehaviour
             return;
         }
 
+        if (ScreenFade.State == ScreenState.Sleeping) return;
+
         if (Input.GetKeyDown(KeyCode.F) && isOpen)
         {
             if (boxContainer != null && boxContainer.IsOpen)

@@ -64,6 +64,12 @@ public class ExitZone : MonoBehaviour
                     if (storageContainer != null)
                         storageContainer.Interact();
                 }
+                else if (hit.collider.CompareTag("Campfire"))
+                {
+                    Campfire campfire = hit.collider.GetComponent<Campfire>();
+                    if (campfire != null)
+                        campfire.Interact();
+                }
                 else
                 {
                     DroppedItem droppedItem = hit.collider.GetComponent<DroppedItem>();

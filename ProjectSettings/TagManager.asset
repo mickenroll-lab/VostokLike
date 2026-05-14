@@ -22,6 +22,7 @@ TagManager:
   - Wall
   - LootContainer
   - StorageContainer
+  - Campfire
   layers:
   - Default
   - TransparentFX
