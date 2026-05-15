@@ -162,6 +162,7 @@ public class EnemyAI : MonoBehaviour
 
             case State.Chase:
                 currentDetectionRange = alertDetectionRange;
+                if (playerState != null) playerState.mental -= (1f / 10f) * Time.deltaTime;
                 if (dist < attackRange)
                     TransitionTo(State.Attack);
                 else if (!CanSeePlayer())
@@ -174,6 +175,7 @@ public class EnemyAI : MonoBehaviour
                 break;
 
             case State.Attack:
+                if (playerState != null) playerState.mental -= (1f / 10f) * Time.deltaTime;
                 if (!CanSeePlayer())
                 {
                     lostPoint = player.position;

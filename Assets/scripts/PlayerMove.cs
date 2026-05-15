@@ -31,6 +31,7 @@ public class PlayerMove : MonoBehaviour
 
         bool canSprint = playerState == null || playerState.stamina > 0;
         float currentSpeed = (Input.GetKey(KeyCode.LeftShift) && canSprint) ? sprintSpeed : speed;
+        if (playerState != null && playerState.mental < 40f) currentSpeed *= 0.8f;
 
         if (controller.isGrounded)
         {

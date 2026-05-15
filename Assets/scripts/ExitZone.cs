@@ -45,6 +45,8 @@ public class ExitZone : MonoBehaviour
                     if (isExiting) return;
                     if (RaidManager.Instance == null) { Debug.LogError("RaidManager.Instance is null"); return; }
                     isExiting = true;
+                    PlayerState ps = FindObjectOfType<PlayerState>();
+                    if (ps != null) ps.mental = Mathf.Min(ps.mental + 20f, ps.mentalMax);
                     int totalValue = inventory.CalculateTotalValue();
                     resultManager.ShowResult(totalValue);
                     RaidManager.Instance.EndRaid(false);

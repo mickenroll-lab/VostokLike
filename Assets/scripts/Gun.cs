@@ -159,6 +159,9 @@ public class Gun : MonoBehaviour
         Debug.Log("残弾：" + currentAmmo);
 
         Ray ray = Camera.main.ScreenPointToRay(new Vector2(Screen.width / 2, Screen.height / 2));
+        PlayerState ps = GetComponent<PlayerState>();
+        if (ps != null && ps.mental < 40f)
+            ray = new Ray(ray.origin, (ray.direction + Random.insideUnitSphere * 0.05f).normalized);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, currentWeapon.range))

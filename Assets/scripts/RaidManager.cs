@@ -14,6 +14,7 @@ public class RaidManager : MonoBehaviour
 
     public enum RaidState { SafeZone, InRaid }
     public RaidState currentState = RaidState.SafeZone;
+    public float raidStartTime = 0f;
 
     void Awake()
     {
@@ -31,7 +32,8 @@ public class RaidManager : MonoBehaviour
     public void BeginRaid()
     {
         currentState = RaidState.InRaid;
-        Debug.Log("���C�h�J�n");
+        raidStartTime = TimeManager.Instance?.currentTime ?? 0f;
+        Debug.Log("レイド開始");
     }
 
     public void EndRaid(bool isDead)
