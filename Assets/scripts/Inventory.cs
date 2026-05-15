@@ -119,7 +119,7 @@ public class Inventory : MonoBehaviour
             return;
         }
 
-        if (ScreenFade.State == ScreenState.Sleeping) return;
+        if (SleepManager.IsSleeping) return;
 
         if (Input.GetKeyDown(KeyCode.F) && isOpen)
         {

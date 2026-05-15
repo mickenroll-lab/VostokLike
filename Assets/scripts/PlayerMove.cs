@@ -19,7 +19,7 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
-        if (ScreenFade.State == ScreenState.Sleeping) return;
+        if (SleepManager.IsSleeping) return;
 
         Inventory inventory = GetComponent<Inventory>();
         if (inventory != null && inventory.inventoryPanel.activeSelf)

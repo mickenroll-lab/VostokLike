@@ -13,13 +13,24 @@ public class TimeManager : MonoBehaviour
     public Light directionalLight;
     public TextMeshProUGUI timeText;
 
+    private float lightYAngle = -30f;
+
     void Awake()
     {
         Instance = this;
     }
 
+    void Start()
+    {
+        if (directionalLight != null)
+            lightYAngle = directionalLight.transform.eulerAngles.y;
+        UpdateLight();
+    }
+
     void Update()
     {
+        if (SleepManager.IsSleeping) return;
+
         currentTime += Time.deltaTime * gameTimeScale / 3600f;
         if (currentTime >= 24f) currentTime -= 24f;
         UpdateLight();
@@ -29,10 +40,18 @@ public class TimeManager : MonoBehaviour
     void UpdateLight()
     {
         if (directionalLight == null) return;
-        // 6:00=0deg, 12:00=90deg, 18:00=180deg, 0:00=270deg
-        float angle = (currentTime - 6f) * 15f;
-        Vector3 euler = directionalLight.transform.eulerAngles;
-        directionalLight.transform.rotation = Quaternion.Euler(angle, euler.y, euler.z);
+        float angle = GetSunAngle();
+        // ジンバルロック回避：Y軸固定 + X軸AngleAxisで仰角制御
+        directionalLight.transform.rotation =
+            Quaternion.AngleAxis(lightYAngle, Vector3.up) *
+            Quaternion.AngleAxis(angle, Vector3.right);
+    }
+
+    float GetSunAngle()
+    {
+        // 0:00=270deg, 6:00=0deg, 12:00=90deg, 18:00=180deg, 24:00=270deg
+        // currentTime/24 で0〜1に正規化し360度循環させることで24時跨ぎの急ジャンプを防ぐ
+        return (currentTime / 24f * 360f + 270f) % 360f;
     }
 
     void UpdateUI()
@@ -46,6 +65,12 @@ public class TimeManager : MonoBehaviour
     public void AdvanceTime(float hours)
     {
         currentTime += hours;
-        if (currentTime >= 24f) currentTime -= 24f;
+        while (currentTime >= 24f) currentTime -= 24f;
+        while (currentTime < 0f) currentTime += 24f;
+    }
+
+    public void ApplyLightAngle()
+    {
+        UpdateLight();
     }
 }

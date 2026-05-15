@@ -25,7 +25,7 @@ public class PlayerState : MonoBehaviour
     public GameObject deathPanel;
     public UnityEngine.UI.Image damageVignette;
 
-    private bool isDead = false;
+    public bool isDead = false;
     private float hungerDamagePending = 0f;
     private float thirstDamagePending = 0f;
     private float vignetteTimer = 0f;
@@ -63,11 +63,11 @@ public class PlayerState : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        Debug.Log($"[TakeDamage] 呼ばれた damage={damage} hp={hp} isSleeping={SleepManager.IsSleeping} hunger={hunger:F1} thirst={thirst:F1} pendingH={hungerDamagePending:F3} pendingT={thirstDamagePending:F3}");
         if (isDead) return;
         hp -= damage;
-        if (ScreenFade.State == ScreenState.Normal)
+        if (!SleepManager.IsSleeping)
             vignetteTimer = vignetteDuration;
-        Debug.Log("プレイヤーHP：" + hp);
         if (hp <= 0)
         {
             isDead = true;
@@ -114,6 +114,12 @@ public class PlayerState : MonoBehaviour
 
     void Update()
     {
+        if (SleepManager.IsSleeping)
+        {
+            Debug.Log($"[PlayerState] Sleep中スキップ pendingH={hungerDamagePending:F3} pendingT={thirstDamagePending:F3} vTimer={vignetteTimer:F3}");
+            return;
+        }
+
         hunger -= hungerDecayRate * Time.deltaTime;
         thirst -= thirstDecayRate * Time.deltaTime;
 
@@ -174,12 +180,13 @@ public class PlayerState : MonoBehaviour
     void UpdateVignette()
     {
         if (damageVignette == null) return;
-        if (ScreenFade.State == ScreenState.Sleeping) return;
+        if (SleepManager.IsSleeping) return;
         if (vignetteTimer > 0f)
         {
             vignetteTimer -= Time.deltaTime;
             float alpha = Mathf.Clamp01(vignetteTimer / vignetteDuration);
             damageVignette.color = new Color(1f, 0f, 0f, alpha);
+            Debug.Log($"[Vignette] timer={vignetteTimer:F3} alpha={alpha:F3}");
         }
         else
         {

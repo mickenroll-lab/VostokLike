@@ -1,65 +1,60 @@
 using UnityEngine;
+using System.Collections;
 
 public class SleepManager : MonoBehaviour
 {
     public static SleepManager Instance;
+    public static bool IsSleeping = false;
 
-    public float fadeDuration = 1f;
+    public GameObject blackPanel;
     public float sleepHours = 8f;
 
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-
-        if (ScreenFade.Instance == null)
-            new GameObject("ScreenFade").AddComponent<ScreenFade>();
+        IsSleeping = false;
+        if (blackPanel != null) blackPanel.SetActive(false);
     }
 
     public void Sleep()
     {
-        Debug.Log($"[SleepManager] Sleep呼ばれた回数確認 isSleeping={ScreenFade.State == ScreenState.Sleeping} Time={Time.time:F2} State={ScreenFade.State}");
-        if (ScreenFade.State != ScreenState.Normal)
-        {
-            Debug.LogWarning($"[SleepManager] Stateが{ScreenFade.State}のためスキップ");
-            return;
-        }
-        if (ScreenFade.Instance == null)
-        {
-            Debug.LogError("[SleepManager] ScreenFade.Instance が null");
-            return;
-        }
-        ScreenFade.State = ScreenState.Sleeping;
+        if (IsSleeping) return;
+        PlayerState player = FindObjectOfType<PlayerState>();
+        if (player != null && player.isDead) return;
+        StartCoroutine(SleepRoutine());
+    }
+
+    IEnumerator SleepRoutine()
+    {
+        IsSleeping = true;
+        if (blackPanel != null) blackPanel.SetActive(true);
+
+        // Lightを消してから時刻変更・角度適用
+        Light directionalLight = TimeManager.Instance?.directionalLight;
+        float originalIntensity = directionalLight != null ? directionalLight.intensity : 1f;
+        if (directionalLight != null) directionalLight.intensity = 0f;
+
+        TimeManager.Instance?.AdvanceTime(sleepHours);
+        TimeManager.Instance?.ApplyLightAngle();
 
         PlayerState player = FindObjectOfType<PlayerState>();
+        if (player != null)
+        {
+            player.hpMax = Mathf.RoundToInt(player.hpMax * 1.2f);
+            player.hp = Mathf.Min(player.hp, player.hpMax);
+            player.staminaMax *= 1.2f;
+            player.stamina = player.staminaMax;
+            player.hunger = player.hungerMax;
+            player.thirst = player.thirstMax;
+            player.ClearVignette();
+        }
 
-        // 問題A：フェード開始前に赤ビネットを即消去
-        player?.ClearVignette();
+        yield return new WaitForSecondsRealtime(1f);
 
-        Debug.Log("[SleepManager] FadeOutIn呼び出し");
-        ScreenFade.Instance.FadeOutIn(fadeDuration,
-            onBlack: () =>
-            {
-                Debug.Log("[SleepManager] onBlack: 時刻スキップ実行");
-                TimeManager.Instance?.AdvanceTime(sleepHours);
-            },
-            onComplete: () =>
-            {
-                Debug.Log("[SleepManager] onComplete: 睡眠ボーナス適用");
-                if (player != null)
-                {
-                    player.hpMax = Mathf.RoundToInt(player.hpMax * 1.2f);
-                    player.hp = Mathf.Min(player.hp, player.hpMax);
-                    player.staminaMax *= 1.2f;
-                    player.stamina = player.staminaMax;
-                    // 問題B：睡眠後の即時hunger/thirstダメージを防ぐため回復
-                    player.hunger = player.hungerMax;
-                    player.thirst = player.thirstMax;
-                    player.ClearVignette();
-                }
-                ScreenFade.State = ScreenState.Normal;
-                Debug.Log("[SleepManager] 睡眠完了 State=Normal");
-            }
-        );
+        // Lightを元の強度に戻してからblackPanel非表示
+        if (directionalLight != null) directionalLight.intensity = originalIntensity;
+        if (blackPanel != null) blackPanel.SetActive(false);
+        IsSleeping = false;
     }
 }
