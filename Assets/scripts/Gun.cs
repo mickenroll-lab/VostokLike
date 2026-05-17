@@ -4,6 +4,7 @@ using System.Collections;
 public class Gun : MonoBehaviour
 {
     public Inventory inventory;
+    public HUDManager hudManager;
     public GameObject hitEffectPrefab;
 
     public ParticleSystem muzzleFlash;
@@ -13,6 +14,7 @@ public class Gun : MonoBehaviour
     private WeaponData currentWeapon;
     private int currentAmmo;
     private bool isReloading = false;
+    private bool magazineLoaded = false;
 
     private Camera mainCamera;
     private Vector3 originalCameraPos;
@@ -105,6 +107,10 @@ public class Gun : MonoBehaviour
     {
         PlayerState state = GetComponent<PlayerState>();
         if (state == null) return;
+
+        if (Input.GetKeyDown(KeyCode.R))
+            Debug.Log("[Gun] R検出(ガード前) currentItem='" + state.currentItem + "' inventoryOpen=" + (inventory != null && inventory.inventoryPanel.activeSelf) + " isReloading=" + isReloading);
+
         if (state.currentItem == "") return;
 
         if (inventory != null && inventory.inventoryPanel.activeSelf) return;
@@ -115,6 +121,7 @@ public class Gun : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R))
         {
+            Debug.Log("[Gun] R押下(ガード通過) currentAmmo=" + currentAmmo + " isReloading=" + isReloading);
             StartCoroutine(Reload());
             return;
         }
@@ -122,26 +129,42 @@ public class Gun : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             if (ItemGrabber.Instance != null && ItemGrabber.Instance.IsHolding) return;
+            if (!magazineLoaded)
+            {
+                Debug.Log("マガジンがない！Rキーでリロード");
+                return;
+            }
             if (currentAmmo <= 0)
             {
-                Debug.Log("弾がない！");
+                Debug.Log("弾がない！Rキーでリロード");
                 return;
             }
             Shoot();
         }
     }
 
-    public void Equip(WeaponData weapon)
+    public int GetCurrentAmmo() => currentAmmo;
+    public int GetMagazineSize() => currentWeapon != null ? currentWeapon.magazineSize : 0;
+
+    public void Equip(WeaponData weapon, int initialAmmo = 0)
     {
+        StopAllCoroutines();
+        isReloading = false;
         currentWeapon = weapon;
-        currentAmmo = weapon.magazineSize;
-        Debug.Log("装備：" + weapon.weaponName);
+        currentAmmo = initialAmmo;
+        magazineLoaded = initialAmmo > 0;
+        Debug.Log($"[Gun] Equip: {weapon.weaponName} currentAmmo={currentAmmo} magazineLoaded={magazineLoaded}");
+        hudManager?.UpdateAmmo(currentAmmo, currentWeapon.magazineSize);
     }
 
     public void Unequip()
     {
+        StopAllCoroutines();
+        isReloading = false;
         currentWeapon = null;
         currentAmmo = 0;
+        magazineLoaded = false;
+        hudManager?.HideAmmo();
     }
 
     void Shoot()
@@ -156,7 +179,9 @@ public class Gun : MonoBehaviour
         if (currentWeapon == null) return;
 
         currentAmmo--;
+        if (currentAmmo <= 0) magazineLoaded = false;
         Debug.Log("残弾：" + currentAmmo);
+        hudManager?.UpdateAmmo(currentAmmo, currentWeapon.magazineSize);
 
         Ray ray = Camera.main.ScreenPointToRay(new Vector2(Screen.width / 2, Screen.height / 2));
         PlayerState ps = GetComponent<PlayerState>();
@@ -193,26 +218,40 @@ public class Gun : MonoBehaviour
 
     IEnumerator Reload()
     {
-        if (currentWeapon == null) yield break;
-        if (!inventory.HasAmmo(currentWeapon.ammoType))
+        if (currentWeapon == null) { Debug.Log("[Reload] 中断：武器なし"); yield break; }
+
+        string magName = currentWeapon.weaponName + "Magazine";
+        InventoryItem newMag = inventory.FindMagazine(magName);
+        if (newMag == null)
         {
-            Debug.Log("Ammoがない！");
+            Debug.Log($"[Reload] 中断：{magName}がインベントリにない");
             yield break;
         }
 
         isReloading = true;
-        Debug.Log("リロード中...");
+        Debug.Log($"[Reload] 開始 currentAmmo={currentAmmo} newMag.ammo={newMag.ammo}");
         yield return new WaitForSeconds(currentWeapon.reloadTime);
 
-        int needed = currentWeapon.magazineSize - currentAmmo;
-        for (int i = 0; i < needed; i++)
+        if (currentWeapon == null) { isReloading = false; yield break; }
+
+        // 旧マガジンをインベントリに戻す（残弾があれば）
+        if (currentAmmo > 0)
         {
-            if (!inventory.HasAmmo(currentWeapon.ammoType)) break;
-            inventory.RemoveAmmo(currentWeapon.ammoType);
+            GameObject magPrefab = Resources.Load<GameObject>(magName);
+            ItemData magData = magPrefab?.GetComponent<ItemData>();
+            int w = magData?.gridWidth ?? 1;
+            int h = magData?.gridHeight ?? 2;
+            inventory.AddItem(magName, w, h, currentAmmo);
+            Debug.Log($"[Reload] 旧マガジン返却 ammo={currentAmmo}");
         }
 
-        currentAmmo = currentWeapon.magazineSize;
+        // 新マガジン装填
+        int newAmmo = newMag.ammo;
+        inventory.RemoveItemDirectly(newMag);
+        currentAmmo = newAmmo;
+        magazineLoaded = true;
         isReloading = false;
-        Debug.Log("リロード完了！");
+        Debug.Log($"[Reload] 完了 newAmmo={newAmmo}");
+        hudManager?.UpdateAmmo(currentAmmo, currentWeapon.magazineSize);
     }
 }

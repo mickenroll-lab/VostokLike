@@ -268,6 +268,100 @@ public class Inventory : MonoBehaviour
         UpdateInventoryUI();
     }
 
+    public void AddItem(string itemName, int w, int h, int ammo)
+    {
+        int stackLimit = GetStackLimit(itemName);
+
+        if (items.ContainsKey(itemName))
+            items[itemName]++;
+        else
+            items[itemName] = 1;
+
+        if (stackLimit > 1)
+        {
+            InventoryItem existing = inventoryItems.Find(item => item.itemName == itemName);
+            if (existing != null)
+            {
+                existing.amount++;
+                UpdateInventoryUI();
+                return;
+            }
+        }
+
+        int foundX, foundY;
+        if (inventoryGrid.FindFreeSpace(w, h, out foundX, out foundY))
+        {
+            InventoryItem newItem = new InventoryItem(itemName, foundX, foundY, w, h);
+            newItem.ammo = ammo;
+            inventoryItems.Add(newItem);
+            inventoryGrid.PlaceItem(newItem.itemId, foundX, foundY, w, h);
+        }
+        UpdateInventoryUI();
+    }
+
+    public int GetAmmo(string itemName)
+    {
+        InventoryItem found = inventoryItems.Find(i => i.itemName == itemName);
+        return found != null ? found.ammo : 0;
+    }
+
+    public int GetItemCount(string itemName)
+    {
+        return items.ContainsKey(itemName) ? items[itemName] : 0;
+    }
+
+    // UpdateInventoryUI を呼ばずに弾薬をまとめて削除する（D&D中のDestroyImmediate回避用）
+    public void RemoveAmmoBatch(string itemName, int count)
+    {
+        if (!items.ContainsKey(itemName) || count <= 0) return;
+        int actual = Mathf.Min(count, items[itemName]);
+        items[itemName] -= actual;
+        InventoryItem target = inventoryItems.Find(i => i.itemName == itemName);
+        if (target != null)
+        {
+            target.amount -= actual;
+            if (items[itemName] <= 0)
+            {
+                items.Remove(itemName);
+                inventoryGrid.RemoveItem(target.itemId);
+                inventoryItems.Remove(target);
+            }
+        }
+    }
+
+    // D&D中にUpdateInventoryUIを直接呼ぶとDestroyImmediateがイベント処理中のオブジェクトを壊すため1フレーム遅延させる
+    public void ScheduleUIUpdate()
+    {
+        StartCoroutine(UpdateUINextFrame());
+    }
+
+    System.Collections.IEnumerator UpdateUINextFrame()
+    {
+        yield return null;
+        UpdateInventoryUI();
+    }
+
+    // ammo > 0 のマガジンを1個返す
+    public InventoryItem FindMagazine(string magazineName)
+    {
+        return inventoryItems.Find(i => i.itemName == magazineName && i.ammo > 0);
+    }
+
+    // 特定のInventoryItemをインベントリから直接削除する
+    public void RemoveItemDirectly(InventoryItem item)
+    {
+        if (!inventoryItems.Contains(item)) return;
+        if (items.ContainsKey(item.itemName))
+        {
+            items[item.itemName]--;
+            if (items[item.itemName] <= 0)
+                items.Remove(item.itemName);
+        }
+        inventoryGrid.RemoveItem(item.itemId);
+        inventoryItems.Remove(item);
+        UpdateInventoryUI();
+    }
+
     int GetStackLimit(string itemName)
     {
         if (itemName == "9x18mm") return 30;
@@ -525,6 +619,30 @@ public class Inventory : MonoBehaviour
                         draggable.inventory = this;
                         draggable.boxContainer = boxContainer;
                         draggable.dragGhost = dragGhostObject;
+
+                        // 武器・マガジンセルの残弾数表示
+                        if (dx == 0 && dy == 0)
+                        {
+                            GameObject wPrefab = Resources.Load<GameObject>(item.itemName);
+                            ItemData wData = wPrefab?.GetComponent<ItemData>();
+                            if (wData != null && wData.category == ItemData.ItemCategory.Weapon)
+                            {
+                                AmmoDisplay ammoDisplay = itemCell.AddComponent<AmmoDisplay>();
+                                WeaponData wd = wPrefab?.GetComponent<WeaponData>();
+                                if (wd != null)
+                                    ammoDisplay.Show(item.ammo, wd.magazineSize);
+                            }
+                            else if (wData != null && wData.category == ItemData.ItemCategory.Magazine)
+                            {
+                                AmmoDisplay ammoDisplay = itemCell.AddComponent<AmmoDisplay>();
+                                ammoDisplay.Show(item.ammo, wData.maxAmmo);
+
+                                MagazineDropHandler dropHandler = itemCell.AddComponent<MagazineDropHandler>();
+                                dropHandler.inventory = this;
+                                dropHandler.magazineItem = item;
+                                dropHandler.magazineData = wData;
+                            }
+                        }
                     }
                 }
             }

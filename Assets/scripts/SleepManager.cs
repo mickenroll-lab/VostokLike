@@ -10,6 +10,7 @@ public class SleepManager : MonoBehaviour
     public float sleepHours = 8f;
 
     private float lastSleepTime = -1f; // 負値=まだ一度も寝ていない
+    private PlayerState playerState;
 
     void Awake()
     {
@@ -17,6 +18,24 @@ public class SleepManager : MonoBehaviour
         Instance = this;
         IsSleeping = false;
         if (blackPanel != null) blackPanel.SetActive(false);
+        playerState = FindObjectOfType<PlayerState>();
+    }
+
+    void Update()
+    {
+        if (playerState == null) playerState = FindObjectOfType<PlayerState>();
+        if (playerState == null || !playerState.sleepBuffActive) return;
+        if (lastSleepTime < 0f || TimeManager.Instance == null) return;
+
+        float elapsed = (TimeManager.Instance.currentTime - lastSleepTime + 24f) % 24f;
+        if (elapsed >= 12f)
+        {
+            playerState.hpMax = playerState.hpMaxBase;
+            playerState.staminaMax = playerState.staminaMaxBase;
+            playerState.hp = Mathf.Min(playerState.hp, playerState.hpMax);
+            playerState.sleepBuffActive = false;
+            Debug.Log("[SleepManager] 睡眠バフ消失");
+        }
     }
 
     public void Sleep()
@@ -51,16 +70,21 @@ public class SleepManager : MonoBehaviour
         TimeManager.Instance?.AdvanceTime(sleepHours);
         TimeManager.Instance?.ApplyLightAngle();
 
-        PlayerState player = FindObjectOfType<PlayerState>();
+        if (playerState == null) playerState = FindObjectOfType<PlayerState>();
+        PlayerState player = playerState;
         if (player != null)
         {
             // 累積防止：初回のみ最大値アップ
             if (!player.sleepBuffActive)
             {
+                player.hpMaxBase = player.hpMax;
+                player.staminaMaxBase = player.staminaMax;
                 player.hpMax = Mathf.RoundToInt(player.hpMax * 1.2f);
                 player.staminaMax *= 1.2f;
                 player.sleepBuffActive = true;
             }
+
+            player.hp = player.hpMax;
 
             // HUN・THIを30消費（回復ではなくコスト）
             player.hunger = Mathf.Max(0f, player.hunger - 30f);

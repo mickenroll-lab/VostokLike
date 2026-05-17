@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e367e5231786c74c901b5a8e42ffe1e, type: 3}
-  m_Name: LootTable_WeaponCrate
+  m_Name: LootTable_Corpse
   m_EditorClassIdentifier: 
   entries:
-  - itemName: PMP
-    minAmount: 1
-    maxAmount: 1
-    chance: 25
   - itemName: 9x18mm
-    minAmount: 30
-    maxAmount: 30
-    chance: 100
+    minAmount: 5
+    maxAmount: 15
+    chance: 60
   - itemName: MedKit
     minAmount: 1
     maxAmount: 1
-    chance: 5
+    chance: 15
+  - itemName: BeefCan
+    minAmount: 1
+    maxAmount: 1
+    chance: 20

@@ -5,7 +5,7 @@ using UnityEngine.ProBuilder;
 public static class GenerateHousesEditor
 {
     const float W = 10f, D = 10f, H = 5f, T = 0.3f;
-    const float DoorW = 2f, DoorH = 3f;
+    const float DoorW = 2.4f, DoorH = 3f;
     const float WinW = 1.5f, WinH = 1.5f, WinYBase = 2.5f;
 
     [MenuItem("VostokLike/Generate Houses")]
@@ -112,7 +112,7 @@ public static class GenerateHousesEditor
         pb.transform.localPosition = localCenter;
         pb.ToMesh();
         pb.Refresh();
-        pb.gameObject.AddComponent<MeshCollider>();
+        pb.gameObject.AddComponent<BoxCollider>();
         GameObjectUtility.SetStaticEditorFlags(pb.gameObject,
             StaticEditorFlags.ContributeGI |
             StaticEditorFlags.BatchingStatic);

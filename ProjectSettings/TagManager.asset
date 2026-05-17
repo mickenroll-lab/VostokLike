@@ -23,6 +23,7 @@ TagManager:
   - LootContainer
   - StorageContainer
   - Campfire
+  - Corpse
   layers:
   - Default
   - TransparentFX

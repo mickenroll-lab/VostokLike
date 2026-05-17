@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
 {
@@ -68,7 +69,23 @@ public class Enemy : MonoBehaviour
             ResultManager resultManager = FindObjectOfType<ResultManager>();
             if (resultManager != null)
                 resultManager.AddKill();
-            Destroy(gameObject);
+            OnDeath();
         }
+    }
+
+    void OnDeath()
+    {
+        EnemyAI ai = GetComponent<EnemyAI>();
+        if (ai != null) ai.enabled = false;
+
+        NavMeshAgent agent = GetComponent<NavMeshAgent>();
+        if (agent != null) agent.enabled = false;
+
+        Animator animator = GetComponent<Animator>();
+        if (animator != null) animator.enabled = false;
+
+        gameObject.tag = "Corpse";
+
+        enabled = false;
     }
 }

@@ -35,6 +35,8 @@ public class LootContainer : MonoBehaviour
 
         Debug.Log($"LootContainer.Interact: calling OpenContainer contentsCount={contents.Count} width={containerData.gridWidth} height={containerData.gridHeight}");
         if (boxContainer == null)
+            boxContainer = FindObjectOfType<BoxContainer>();
+        if (boxContainer == null)
         {
             Debug.LogWarning("LootContainer.Interact: boxContainer reference is null.");
             return;

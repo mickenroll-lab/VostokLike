@@ -17,7 +17,7 @@ public class ItemManager : MonoBehaviour
         if (playerState == null) return;
         playerState.hp += amount;
         playerState.hp = Mathf.Min(playerState.hp, 100);
-        Debug.Log("HP‰ñ•œF" + playerState.hp);
+        Debug.Log("HPï¿½ñ•œF" + playerState.hp);
     }
     public void PickupFood(int amount)
     {
@@ -25,7 +25,8 @@ public class ItemManager : MonoBehaviour
         if (playerState == null) return;
         playerState.hunger += amount;
         playerState.hunger = Mathf.Min(playerState.hunger, playerState.hungerMax);
-        Debug.Log("H—¿‰ñ•œF" + playerState.hunger);
+        playerState.HealOverTime(10);
+        Debug.Log("ï¿½Hï¿½ï¿½ï¿½ñ•œF" + playerState.hunger);
     }
 
     public void PickupWater(int amount)
@@ -34,6 +35,6 @@ public class ItemManager : MonoBehaviour
         if (playerState == null) return;
         playerState.thirst += amount;
         playerState.thirst = Mathf.Min(playerState.thirst, playerState.thirstMax);
-        Debug.Log("…•ª‰ñ•œF" + playerState.thirst);
+        Debug.Log("ï¿½ï¿½ï¿½ï¿½ï¿½ñ•œF" + playerState.thirst);
     }
 }

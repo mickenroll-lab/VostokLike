@@ -14,7 +14,9 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     public BoxContainer boxContainer;
 
     private string equippedItem = "";
-    
+    private string savedAmmoWeapon = "";
+    private int savedAmmo = 0;
+
     public GameObject dragGhostObject;
 
     private CanvasGroup canvasGroup;
@@ -43,9 +45,10 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
             return;
         }
 
-        // ���ɑ������̂��̂��C���x���g���ɖ߂�
         if (equippedItem != "")
         {
+            savedAmmoWeapon = equippedItem;
+            savedAmmo = gun.GetCurrentAmmo();
             GameObject equippedPrefab = Resources.Load<GameObject>(equippedItem);
             int w = 1, h = 1;
             if (equippedPrefab != null)
@@ -53,23 +56,29 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
                 ItemData equippedData = equippedPrefab.GetComponent<ItemData>();
                 if (equippedData != null) { w = equippedData.gridWidth; h = equippedData.gridHeight; }
             }
-            inventory.AddItem(equippedItem, w, h);
+            inventory.AddItem(equippedItem, w, h, savedAmmo);
             gun.Unequip();
         }
 
         equippedItem = draggable.itemName;
         playerState.currentItem = equippedItem;
 
-        // �B �h���b�O���ɉ����ăA�C�e���폜���؂�ւ�
+        // インベントリからの場合は RemoveItem 前に残弾数を取得
+        int fromInventoryAmmo = draggable.fromInventory ? inventory.GetAmmo(equippedItem) : -1;
+
         if (draggable.fromInventory)
             inventory.RemoveItem(equippedItem);
         else
-            draggable.boxContainer.RemoveFromBox(equippedItem); // Box������폜
+            draggable.boxContainer.RemoveFromBox(equippedItem);
 
-        // WeaponData��T����Equip
         WeaponData weaponData = prefab.GetComponent<WeaponData>();
         if (weaponData != null)
-            gun.Equip(weaponData);
+        {
+            int ammo = fromInventoryAmmo >= 0 ? fromInventoryAmmo
+                : (savedAmmoWeapon == equippedItem) ? savedAmmo : 0;
+            Debug.Log($"[OnDrop復元判定] fromInventoryAmmo={fromInventoryAmmo} savedAmmo={savedAmmo} → ammo={ammo}");
+            gun.Equip(weaponData, ammo);
+        }
 
         slotText.text = equippedItem;
         inventory.UpdateInventoryUI();
@@ -86,7 +95,9 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     public void Unequip()
     {
         if (equippedItem == "") return;
-        // Resources ���� ItemData ���擾���ăT�C�Y��n��
+        savedAmmoWeapon = equippedItem;
+        savedAmmo = gun.GetCurrentAmmo();
+        Debug.Log($"[Unequip] savedAmmoWeapon='{savedAmmoWeapon}' savedAmmo={savedAmmo}");
         GameObject prefab = Resources.Load<GameObject>(equippedItem);
         int w = 1, h = 1;
         if (prefab != null)
@@ -94,7 +105,7 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
             ItemData data = prefab.GetComponent<ItemData>();
             if (data != null) { w = data.gridWidth; h = data.gridHeight; }
         }
-        inventory.AddItem(equippedItem, w, h);
+        inventory.AddItem(equippedItem, w, h, savedAmmo);
         gun.Unequip();
         playerState.currentItem = "";
         equippedItem = "";
@@ -104,6 +115,11 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     public string GetEquippedItem()
     {
         return equippedItem;
+    }
+
+    public int GetSavedAmmo()
+    {
+        return savedAmmo;
     }
 
     public void ForceUnequip()
@@ -118,6 +134,10 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
     {
         if (equippedItem == "") return;
         if (dragGhostObject == null) return;
+
+        savedAmmoWeapon = equippedItem;
+        savedAmmo = gun.GetCurrentAmmo();
+        Debug.Log($"[OnBeginDrag保存] savedAmmoWeapon='{savedAmmoWeapon}' savedAmmo={savedAmmo}");
 
         DraggableItem ghostDraggable = dragGhostObject.GetComponent<DraggableItem>();
         if (ghostDraggable == null)
@@ -155,14 +175,17 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
     public void EquipFromInventory(string itemName)
     {
+        Debug.Log("[EquipmentSlot] EquipFromInventory: " + itemName);
         GameObject prefab = Resources.Load<GameObject>(itemName);
-        if (prefab == null) return;
+        if (prefab == null) { Debug.Log("[EquipmentSlot] prefabがnull: " + itemName); return; }
         ItemData data = prefab.GetComponent<ItemData>();
-        if (data == null) return;
-        if (data.category != ItemCategory.Weapon) return;
+        if (data == null) { Debug.Log("[EquipmentSlot] ItemDataなし"); return; }
+        if (data.category != ItemCategory.Weapon) { Debug.Log("[EquipmentSlot] Weapon以外: " + data.category); return; }
 
         if (equippedItem != "")
         {
+            savedAmmoWeapon = equippedItem;
+            savedAmmo = gun.GetCurrentAmmo();
             GameObject equippedPrefab = Resources.Load<GameObject>(equippedItem);
             int w = 1, h = 1;
             if (equippedPrefab != null)
@@ -170,17 +193,21 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
                 ItemData equippedData = equippedPrefab.GetComponent<ItemData>();
                 if (equippedData != null) { w = equippedData.gridWidth; h = equippedData.gridHeight; }
             }
-            inventory.AddItem(equippedItem, w, h);
+            inventory.AddItem(equippedItem, w, h, savedAmmo);
             gun.Unequip();
         }
 
         equippedItem = itemName;
         playerState.currentItem = equippedItem;
+        int storedAmmo = inventory.GetAmmo(itemName); // RemoveItem 前に取得
         inventory.RemoveItem(itemName);
 
         WeaponData weaponData = prefab.GetComponent<WeaponData>();
         if (weaponData != null)
-            gun.Equip(weaponData);
+        {
+            Debug.Log($"[EquipFromInventory] storedAmmo={storedAmmo} → ammo={storedAmmo}");
+            gun.Equip(weaponData, storedAmmo);
+        }
 
         slotText.text = equippedItem;
         inventory.UpdateInventoryUI();
@@ -188,16 +215,16 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
     public void EquipFromBox(string itemName, BoxContainer boxContainer)
     {
-        // �J�e�S���`�F�b�N
         GameObject prefab = Resources.Load<GameObject>(itemName);
         if (prefab == null) return;
         ItemData data = prefab.GetComponent<ItemData>();
         if (data == null) return;
         if (data.category != ItemCategory.Weapon) return;
 
-        // ���ɑ������̂��̂��C���x���g���ɖ߂�
         if (equippedItem != "")
         {
+            savedAmmoWeapon = equippedItem;
+            savedAmmo = gun.GetCurrentAmmo();
             GameObject equippedPrefab = Resources.Load<GameObject>(equippedItem);
             int w = 1, h = 1;
             if (equippedPrefab != null)
@@ -205,18 +232,20 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
                 ItemData equippedData = equippedPrefab.GetComponent<ItemData>();
                 if (equippedData != null) { w = equippedData.gridWidth; h = equippedData.gridHeight; }
             }
-            inventory.AddItem(equippedItem, w, h);
+            inventory.AddItem(equippedItem, w, h, savedAmmo);
             gun.Unequip();
         }
 
-        // ��������
         equippedItem = itemName;
         playerState.currentItem = equippedItem;
         boxContainer.RemoveFromBox(itemName, 1);
 
         WeaponData weaponData = prefab.GetComponent<WeaponData>();
         if (weaponData != null)
-            gun.Equip(weaponData);
+        {
+            int ammo = (savedAmmoWeapon == itemName) ? savedAmmo : 0;
+            gun.Equip(weaponData, ammo);
+        }
 
         slotText.text = equippedItem;
         inventory.UpdateInventoryUI();

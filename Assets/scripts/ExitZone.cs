@@ -72,6 +72,14 @@ public class ExitZone : MonoBehaviour
                     if (campfire != null)
                         campfire.Interact();
                 }
+                else if (hit.collider.CompareTag("Corpse"))
+                {
+                    Debug.Log("Corpseインタラクト");
+                    LootContainer lootContainer = hit.collider.GetComponent<LootContainer>()
+                        ?? hit.collider.GetComponentInParent<LootContainer>();
+                    if (lootContainer != null)
+                        lootContainer.Interact();
+                }
                 else
                 {
                     DroppedItem droppedItem = hit.collider.GetComponent<DroppedItem>();

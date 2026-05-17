@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
@@ -30,9 +31,13 @@ public class PlayerState : MonoBehaviour
 
     public bool isDead = false;
     public bool sleepBuffActive = false;
+    public int hpMaxBase = 100;
+    public float staminaMaxBase = 100f;
     private float hungerDamagePending = 0f;
     private float thirstDamagePending = 0f;
     private float mentalDamagePending = 0f;
+    private int pendingHeal = 0;
+    private Coroutine healCoroutine = null;
     private float vignetteTimer = 0f;
     private const float vignetteDuration = 1f;
     private float defaultFOV = 60f;
@@ -210,7 +215,16 @@ public class PlayerState : MonoBehaviour
 
         // メンタルUI更新
         if (mentalText != null)
+        {
             mentalText.text = Mathf.CeilToInt(mental).ToString();
+            float mentalPct = mentalMax > 0 ? mental / mentalMax * 100f : 0f;
+            if (mentalPct >= 80f)
+                mentalText.color = new Color(0x44 / 255f, 0xFF / 255f, 0x2F / 255f);
+            else if (mentalPct <= 20f)
+                mentalText.color = Color.red;
+            else
+                mentalText.color = Color.white;
+        }
 
         UpdateVignette();
     }
@@ -240,6 +254,31 @@ public class PlayerState : MonoBehaviour
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+
+    public void HealOverTime(int amount)
+    {
+        pendingHeal += amount;
+        if (healCoroutine == null)
+            healCoroutine = StartCoroutine(HealOverTimeCoroutine());
+    }
+
+    IEnumerator HealOverTimeCoroutine()
+    {
+        while (pendingHeal > 0)
+        {
+            yield return new WaitForSeconds(0.5f);
+            if (!isDead)
+            {
+                hp = Mathf.Min(hp + 1, hpMax);
+                pendingHeal--;
+            }
+            else
+            {
+                pendingHeal = 0;
+            }
+        }
+        healCoroutine = null;
     }
 
     public void ClearVignette()

@@ -29,7 +29,7 @@ public class DropTarget : MonoBehaviour, IDropHandler
                 }
                 if (isInventory)
                 {
-                    inventory.AddItem(unequipItem, itemW, itemH);
+                    inventory.AddItem(unequipItem, itemW, itemH, equipSlot.GetSavedAmmo());
                 }
                 else
                 {

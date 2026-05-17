@@ -7,12 +7,17 @@ public class ItemData : MonoBehaviour
     {
         Weapon,
         Consumable,
-        Bullet,     // ’Ç‰Á
-                    // Magazine, // Œã‚Å’Ç‰Á
+        Bullet,
+        Magazine,
     }
     public ItemCategory category;
     public int amount = 1;
     public int value = 0;
-    public int gridWidth = 1;  // ƒOƒŠƒbƒhã‚Ì•
-    public int gridHeight = 1; // ƒOƒŠƒbƒhã‚Ì‚‚³
+    public int gridWidth = 1;
+    public int gridHeight = 1;
+
+    // Magazineå°‚ç”¨ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰
+    public int maxAmmo = 0;
+    public string compatibleWeapon = "";
+    public string compatibleBullet = "";
 }

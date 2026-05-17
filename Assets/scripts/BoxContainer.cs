@@ -241,6 +241,8 @@ public class BoxContainer : MonoBehaviour
 
     void PrimaryAction(string itemName)
     {
+        if (tooltipText != null) tooltipText.gameObject.SetActive(false);
+
         GameObject prefab = Resources.Load<GameObject>(itemName);
         if (prefab == null) return;
         ItemData data = prefab.GetComponent<ItemData>();
@@ -344,6 +346,22 @@ public class BoxContainer : MonoBehaviour
                 draggable.boxContainer = this;
                 draggable.dragGhost = dragGhostObject;
 
+                // 武器セルの残弾数表示（メインセルのみ）
+                // BoxGrid内の未装備武器は残弾追跡なし。将来マガジンシステムで対応予定。
+                if (dx == 0 && dy == 0)
+                {
+                    GameObject wPrefab = Resources.Load<GameObject>(itemName);
+                    ItemData wData = wPrefab?.GetComponent<ItemData>();
+                    if (wData != null && wData.category == ItemCategory.Weapon)
+                    {
+                        AmmoDisplay ammoDisplay = cell.AddComponent<AmmoDisplay>();
+                        string equipped = weaponSlot?.GetEquippedItem() ?? "";
+                        Gun gun = weaponSlot?.gun;
+                        if (equipped == itemName && gun != null)
+                            ammoDisplay.Show(gun.GetCurrentAmmo(), gun.GetMagazineSize());
+                    }
+                }
+
                 cellIndex++;
             }
 
@@ -354,7 +372,7 @@ public class BoxContainer : MonoBehaviour
                 GameObject prefab = Resources.Load<GameObject>(itemName);
                 ItemData data = prefab != null ? prefab.GetComponent<ItemData>() : null;
 
-                int amount = boxContents[itemName];
+                int amount = displayCount;
                 int itemW = data != null ? data.gridWidth : 1;
                 int itemH = data != null ? data.gridHeight : 1;
 

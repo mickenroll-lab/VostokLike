@@ -7,7 +7,25 @@
       "Bash(Get-ChildItem \"C:\\\\Users\\\\user\\\\My project \\(1\\)\\\\STREAMINGDocs\" -Force)",
       "Bash(Format-List Name, LastWriteTime, Length)",
       "Skill(update-config)",
-      "Skill(update-config:*)"
+      "Skill(update-config:*)",
+      "Bash(Get-Content \"c:\\\\Users\\\\user\\\\My project \\(1\\)\\\\STREAMINGDocs\\\\transcript_day11.txt\" -TotalCount 200)",
+      "Bash(Remove-Item -Path \"c:\\\\Users\\\\user\\\\My project \\(1\\)\\\\Assets\\\\scripts\\\\ScreenFade.cs\" -Force)",
+      "Bash(Remove-Item -Path \"c:\\\\Users\\\\user\\\\My project \\(1\\)\\\\Assets\\\\scripts\\\\ScreenFade.cs.meta\" -Force -ErrorAction SilentlyContinue)",
+      "Bash(Write-Output \"削除完了\")",
+      "Read(//c/Users/user/projects/transcriber/**)",
+      "Bash(py transcriber.py)",
+      "Bash(ls \"C:/Users/user/projects/docs/\")",
+      "Read(//c/Users/user/projects/docs/**)",
+      "Bash(mkdir \"C:\\\\Users\\\\user\\\\projects\\\\docs\\\\tooltip\")",
+      "Bash(py -c \"import ast, sys; ast.parse\\(open\\('transcriber.py', encoding='utf-8'\\).read\\(\\)\\); print\\('構文OK'\\)\")",
+      "Bash(py -c \"import ast; ast.parse\\(open\\('transcriber.py', encoding='utf-8'\\).read\\(\\)\\); print\\('構文OK'\\)\")",
+      "Bash(py -m pip install deep-translator)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\user\\\\projects\\\\docs\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(Rename-Item \"C:\\\\Users\\\\user\\\\projects\\\\docs\\\\STREAMINGDocs\\\\Summaried_transcript_day12.txt\" \"Summaried_transcript_day12.md\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\user\\projects\\docs"
     ]
   }
 }
