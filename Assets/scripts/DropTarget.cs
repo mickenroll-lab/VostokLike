@@ -52,28 +52,37 @@ public class DropTarget : MonoBehaviour, IDropHandler
             if (draggable.dragGhost != null) draggable.dragGhost.SetActive(false);
             Destroy(eventData.pointerDrag.gameObject);
         }
-        // Box���C���x���g��
+        // Box→インベントリ
         else if (!draggable.fromInventory && isInventory)
         {
-            // ItemData����T�C�Y���擾
             int itemW = 1;
             int itemH = 1;
             bool isStackable = false;
+            bool isMagazine = false;
+            ItemData itemData = null;
             GameObject prefab = Resources.Load<GameObject>(draggable.itemName);
             if (prefab != null)
             {
-                ItemData data = prefab.GetComponent<ItemData>();
-                if (data != null)
+                itemData = prefab.GetComponent<ItemData>();
+                if (itemData != null)
                 {
-                    itemW = data.gridWidth;
-                    itemH = data.gridHeight;
-                    isStackable = data.category == ItemData.ItemCategory.Bullet;
+                    itemW = itemData.gridWidth;
+                    itemH = itemData.gridHeight;
+                    isStackable = itemData.category == ItemData.ItemCategory.Bullet;
+                    isMagazine = itemData.category == ItemData.ItemCategory.Magazine;
                 }
             }
 
             if (Input.GetKey(KeyCode.LeftShift))
             {
                 boxContainer.MoveAllToPlayer(draggable.itemName);
+            }
+            else if (isMagazine)
+            {
+                // ammoを引き継いで移動
+                int ammo = boxContainer.GetFirstMagazineAmmo(draggable.itemName);
+                inventory.AddItem(draggable.itemName, itemW, itemH, ammo);
+                boxContainer.RemoveFromBox(draggable.itemName, 1);
             }
             else
             {

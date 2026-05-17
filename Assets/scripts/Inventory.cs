@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -14,7 +15,12 @@ public class Inventory : MonoBehaviour
         if (boxContainer == null || !boxGrid.activeSelf) return;
         if (specificItem == null || !inventoryItems.Contains(specificItem)) return;
 
-        boxContainer.AddToBox(specificItem.itemName, specificItem.amount);
+        GameObject prefab = Resources.Load<GameObject>(specificItem.itemName);
+        ItemData data = prefab?.GetComponent<ItemData>();
+        if (data != null && data.category == ItemData.ItemCategory.Magazine)
+            boxContainer.AddMagazineToBox(specificItem.itemName, specificItem.ammo);
+        else
+            boxContainer.AddToBox(specificItem.itemName, specificItem.amount);
 
         if (items.ContainsKey(specificItem.itemName))
         {
@@ -34,15 +40,25 @@ public class Inventory : MonoBehaviour
     {
         if (boxContainer == null || !boxGrid.activeSelf) return;
 
+        GameObject prefab = Resources.Load<GameObject>(itemName);
+        ItemData data = prefab?.GetComponent<ItemData>();
+        bool isMagazine = data != null && data.category == ItemData.ItemCategory.Magazine;
+
         if (moveAll)
         {
             int count = items.ContainsKey(itemName) ? items[itemName] : 0;
             if (count <= 0) return;
-            boxContainer.AddToBox(itemName, count);
-            items.Remove(itemName);
 
-            // 同名のInventoryItemを全て削除
             List<InventoryItem> toRemove = inventoryItems.FindAll(i => i.itemName == itemName);
+            if (isMagazine)
+            {
+                foreach (InventoryItem mag in toRemove)
+                    boxContainer.AddMagazineToBox(mag.itemName, mag.ammo);
+            }
+            else
+                boxContainer.AddToBox(itemName, count);
+
+            items.Remove(itemName);
             foreach (InventoryItem inv in toRemove)
             {
                 inventoryGrid.RemoveItem(inv.itemId);
@@ -53,7 +69,10 @@ public class Inventory : MonoBehaviour
         {
             InventoryItem target = inventoryItems.Find(i => i.itemName == itemName);
             int amount = target != null ? target.amount : 1;
-            boxContainer.AddToBox(itemName, amount);
+            if (isMagazine && target != null)
+                boxContainer.AddMagazineToBox(itemName, target.ammo);
+            else
+                boxContainer.AddToBox(itemName, amount);
             if (items.ContainsKey(itemName))
             {
                 items[itemName] -= amount;
@@ -341,11 +360,22 @@ public class Inventory : MonoBehaviour
         UpdateInventoryUI();
     }
 
-    // ammo > 0 のマガジンを1個返す
+    // ammo > 0 のマガジンを残弾数降順で返す
     public InventoryItem FindMagazine(string magazineName)
     {
-        return inventoryItems.Find(i => i.itemName == magazineName && i.ammo > 0);
+        return inventoryItems
+            .FindAll(i => i.itemName == magazineName && i.ammo > 0)
+            .OrderByDescending(i => i.ammo)
+            .FirstOrDefault();
     }
+
+    public bool HasFreeSpace(int w, int h)
+    {
+        int x, y;
+        return inventoryGrid.FindFreeSpace(w, h, out x, out y);
+    }
+
+    public bool ContainsItem(InventoryItem item) => inventoryItems.Contains(item);
 
     // 特定のInventoryItemをインベントリから直接削除する
     public void RemoveItemDirectly(InventoryItem item)
@@ -588,6 +618,8 @@ public class Inventory : MonoBehaviour
                                 ItemData d = p != null ? p.GetComponent<ItemData>() : null;
                                 if (d != null && d.category == ItemData.ItemCategory.Weapon && equipmentSlot != null)
                                     equipmentSlot.EquipFromInventory(captured);
+                                else if (d != null && d.category == ItemData.ItemCategory.Magazine && equipmentSlot != null)
+                                    equipmentSlot.gun?.ReloadWith(capturedItem);
                                 else
                                     UseItem(captured);
                             }
@@ -620,7 +652,7 @@ public class Inventory : MonoBehaviour
                         draggable.boxContainer = boxContainer;
                         draggable.dragGhost = dragGhostObject;
 
-                        // 武器・マガジンセルの残弾数表示
+                        // 武器・マガジンセルの残弾数表示＋右クリックアクション
                         if (dx == 0 && dy == 0)
                         {
                             GameObject wPrefab = Resources.Load<GameObject>(item.itemName);
@@ -641,6 +673,35 @@ public class Inventory : MonoBehaviour
                                 dropHandler.inventory = this;
                                 dropHandler.magazineItem = item;
                                 dropHandler.magazineData = wData;
+                            }
+
+                            // 右クリック：武器＝マガジン取り出し、マガジン＝アンロード
+                            if (wData != null && (wData.category == ItemData.ItemCategory.Weapon || wData.category == ItemData.ItemCategory.Magazine))
+                            {
+                                ItemData capturedWData = wData;
+                                EventTrigger.Entry rightClickEntry = new EventTrigger.Entry();
+                                rightClickEntry.eventID = EventTriggerType.PointerClick;
+                                rightClickEntry.callback.AddListener((eventData) =>
+                                {
+                                    PointerEventData ped = (PointerEventData)eventData;
+                                    if (ped.button != PointerEventData.InputButton.Right) return;
+                                    if (capturedWData.category == ItemData.ItemCategory.Weapon)
+                                    {
+                                        if (equipmentSlot != null)
+                                            equipmentSlot.gun?.RemoveMagazineToInventory();
+                                    }
+                                    else if (capturedWData.category == ItemData.ItemCategory.Magazine)
+                                    {
+                                        if (capturedItem.ammo > 0)
+                                        {
+                                            for (int i = 0; i < capturedItem.ammo; i++)
+                                                AddItem(capturedWData.compatibleBullet);
+                                            capturedItem.ammo = 0;
+                                            ScheduleUIUpdate();
+                                        }
+                                    }
+                                });
+                                trigger.triggers.Add(rightClickEntry);
                             }
                         }
                     }
