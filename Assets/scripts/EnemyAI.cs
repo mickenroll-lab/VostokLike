@@ -16,6 +16,9 @@ public class EnemyAI : MonoBehaviour
     public AudioClip gunShotSound;
     public float curiousWaitTime = 3f;
 
+    public int startAmmo = 8;
+    private int enemyAmmo;
+
     private float lastAttackTime;
     private AudioSource audioSource;
     private NavMeshAgent agent;
@@ -46,6 +49,7 @@ public class EnemyAI : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         player = GameObject.FindWithTag("Player").transform;
         audioSource = GetComponent<AudioSource>();
+        enemyAmmo = startAmmo;
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
         currentDetectionRange = detectionRange;
@@ -255,6 +259,8 @@ public class EnemyAI : MonoBehaviour
         agent.SetDestination(player.position);
     }
 
+    public int GetRemainingAmmo() => enemyAmmo;
+
     void Attack()
     {
         agent.ResetPath();
@@ -262,7 +268,9 @@ public class EnemyAI : MonoBehaviour
         transform.rotation = Quaternion.LookRotation(dir);
         if (Time.time - lastAttackTime > attackCooldown)
         {
+            if (enemyAmmo <= 0) return;
             lastAttackTime = Time.time;
+            enemyAmmo--;
             if (audioSource != null && gunShotSound != null)
                 audioSource.PlayOneShot(gunShotSound);
             Ray ray = new Ray(transform.position + Vector3.up * 1.5f, dir);

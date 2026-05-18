@@ -63,11 +63,16 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         equippedItem = draggable.itemName;
         playerState.currentItem = equippedItem;
 
-        // インベントリからの場合は RemoveItem 前に残弾数を取得
-        int fromInventoryAmmo = draggable.fromInventory ? inventory.GetAmmo(equippedItem) : -1;
+        // インベントリからの場合はインスタンスのammoを直接参照（名前検索では複数PMP時に誤取得する）
+        int fromInventoryAmmo = draggable.fromInventory ? (draggable.inventoryItem?.ammo ?? -1) : -1;
 
         if (draggable.fromInventory)
-            inventory.RemoveItem(equippedItem);
+        {
+            if (draggable.inventoryItem != null)
+                inventory.RemoveItemDirectly(draggable.inventoryItem);
+            else
+                inventory.RemoveItem(equippedItem);
+        }
         else
             draggable.boxContainer.RemoveFromBox(equippedItem);
 
@@ -179,8 +184,9 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
         gun?.RemoveMagazineToInventory();
     }
 
-    public void EquipFromInventory(string itemName)
+    public void EquipFromInventory(InventoryItem item)
     {
+        string itemName = item.itemName;
         Debug.Log("[EquipmentSlot] EquipFromInventory: " + itemName);
         GameObject prefab = Resources.Load<GameObject>(itemName);
         if (prefab == null) { Debug.Log("[EquipmentSlot] prefabがnull: " + itemName); return; }
@@ -205,8 +211,8 @@ public class EquipmentSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDr
 
         equippedItem = itemName;
         playerState.currentItem = equippedItem;
-        int storedAmmo = inventory.GetAmmo(itemName); // RemoveItem 前に取得
-        inventory.RemoveItem(itemName);
+        int storedAmmo = item.ammo; // インスタンスのammoを直接参照（名前検索しない）
+        inventory.RemoveItemDirectly(item);
 
         WeaponData weaponData = prefab.GetComponent<WeaponData>();
         if (weaponData != null)

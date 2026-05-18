@@ -33,8 +33,7 @@ public class DropTarget : MonoBehaviour, IDropHandler
                 }
                 else
                 {
-                    // Box����
-                    boxContainer.AddToBox(unequipItem, 1);
+                    boxContainer.AddWeaponToBox(unequipItem, equipSlot.GetSavedAmmo());
                 }
                 equipSlot.ForceUnequip();
                 inventory.UpdateInventoryUI();
@@ -45,10 +44,13 @@ public class DropTarget : MonoBehaviour, IDropHandler
             return;
         }
 
-        // �C���x���g����Box
+        // インベントリ→Box
         if (draggable.fromInventory && !isInventory)
         {
-            inventory.MoveToBox(draggable.itemName);
+            if (draggable.inventoryItem != null)
+                inventory.MoveToBoxItem(draggable.inventoryItem);
+            else
+                inventory.MoveToBox(draggable.itemName);
             if (draggable.dragGhost != null) draggable.dragGhost.SetActive(false);
             Destroy(eventData.pointerDrag.gameObject);
         }
@@ -59,6 +61,7 @@ public class DropTarget : MonoBehaviour, IDropHandler
             int itemH = 1;
             bool isStackable = false;
             bool isMagazine = false;
+            bool isWeapon = false;
             ItemData itemData = null;
             GameObject prefab = Resources.Load<GameObject>(draggable.itemName);
             if (prefab != null)
@@ -70,6 +73,7 @@ public class DropTarget : MonoBehaviour, IDropHandler
                     itemH = itemData.gridHeight;
                     isStackable = itemData.category == ItemData.ItemCategory.Bullet;
                     isMagazine = itemData.category == ItemData.ItemCategory.Magazine;
+                    isWeapon = itemData.category == ItemData.ItemCategory.Weapon;
                 }
             }
 
@@ -79,10 +83,31 @@ public class DropTarget : MonoBehaviour, IDropHandler
             }
             else if (isMagazine)
             {
-                // ammoを引き継いで移動
-                int ammo = boxContainer.GetFirstMagazineAmmo(draggable.itemName);
-                inventory.AddItem(draggable.itemName, itemW, itemH, ammo);
-                boxContainer.RemoveFromBox(draggable.itemName, 1);
+                if (draggable.inventoryItem != null)
+                {
+                    inventory.AddItem(draggable.itemName, itemW, itemH, draggable.inventoryItem.ammo);
+                    boxContainer.RemoveInventoryItemFromBox(draggable.inventoryItem);
+                }
+                else
+                {
+                    int ammo = boxContainer.GetFirstMagazineAmmo(draggable.itemName);
+                    inventory.AddItem(draggable.itemName, itemW, itemH, ammo);
+                    boxContainer.RemoveFromBox(draggable.itemName, 1);
+                }
+            }
+            else if (isWeapon)
+            {
+                if (draggable.inventoryItem != null)
+                {
+                    inventory.AddItem(draggable.itemName, itemW, itemH, draggable.inventoryItem.ammo);
+                    boxContainer.RemoveInventoryItemFromBox(draggable.inventoryItem);
+                }
+                else
+                {
+                    int ammo = boxContainer.GetFirstMagazineAmmo(draggable.itemName);
+                    inventory.AddItem(draggable.itemName, itemW, itemH, ammo);
+                    boxContainer.RemoveFromBox(draggable.itemName, 1);
+                }
             }
             else
             {

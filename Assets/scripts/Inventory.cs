@@ -19,6 +19,8 @@ public class Inventory : MonoBehaviour
         ItemData data = prefab?.GetComponent<ItemData>();
         if (data != null && data.category == ItemData.ItemCategory.Magazine)
             boxContainer.AddMagazineToBox(specificItem.itemName, specificItem.ammo);
+        else if (data != null && data.category == ItemData.ItemCategory.Weapon)
+            boxContainer.AddWeaponToBox(specificItem.itemName, specificItem.ammo);
         else
             boxContainer.AddToBox(specificItem.itemName, specificItem.amount);
 
@@ -43,6 +45,7 @@ public class Inventory : MonoBehaviour
         GameObject prefab = Resources.Load<GameObject>(itemName);
         ItemData data = prefab?.GetComponent<ItemData>();
         bool isMagazine = data != null && data.category == ItemData.ItemCategory.Magazine;
+        bool isWeapon = data != null && data.category == ItemData.ItemCategory.Weapon;
 
         if (moveAll)
         {
@@ -54,6 +57,11 @@ public class Inventory : MonoBehaviour
             {
                 foreach (InventoryItem mag in toRemove)
                     boxContainer.AddMagazineToBox(mag.itemName, mag.ammo);
+            }
+            else if (isWeapon)
+            {
+                foreach (InventoryItem wpn in toRemove)
+                    boxContainer.AddWeaponToBox(wpn.itemName, wpn.ammo);
             }
             else
                 boxContainer.AddToBox(itemName, count);
@@ -71,6 +79,8 @@ public class Inventory : MonoBehaviour
             int amount = target != null ? target.amount : 1;
             if (isMagazine && target != null)
                 boxContainer.AddMagazineToBox(itemName, target.ammo);
+            else if (isWeapon && target != null)
+                boxContainer.AddWeaponToBox(itemName, target.ammo);
             else
                 boxContainer.AddToBox(itemName, amount);
             if (items.ContainsKey(itemName))
@@ -590,6 +600,7 @@ public class Inventory : MonoBehaviour
                         {
                             DraggableItem draggable = itemCell.AddComponent<DraggableItem>();
                             draggable.itemName = item.itemName;
+                            draggable.inventoryItem = item;
                             draggable.fromInventory = true;
                             draggable.inventory = this;
                             draggable.boxContainer = boxContainer;
@@ -617,7 +628,7 @@ public class Inventory : MonoBehaviour
                                 GameObject p = Resources.Load<GameObject>(captured);
                                 ItemData d = p != null ? p.GetComponent<ItemData>() : null;
                                 if (d != null && d.category == ItemData.ItemCategory.Weapon && equipmentSlot != null)
-                                    equipmentSlot.EquipFromInventory(captured);
+                                    equipmentSlot.EquipFromInventory(capturedItem);
                                 else if (d != null && d.category == ItemData.ItemCategory.Magazine && equipmentSlot != null)
                                     equipmentSlot.gun?.ReloadWith(capturedItem);
                                 else
@@ -647,6 +658,7 @@ public class Inventory : MonoBehaviour
 
                         DraggableItem draggable = itemCell.AddComponent<DraggableItem>();
                         draggable.itemName = item.itemName;
+                        draggable.inventoryItem = item;
                         draggable.fromInventory = true;
                         draggable.inventory = this;
                         draggable.boxContainer = boxContainer;

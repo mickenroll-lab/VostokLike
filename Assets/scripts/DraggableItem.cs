@@ -5,8 +5,9 @@ using TMPro;
 
 public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public string itemName; // itemId���i�[
-    
+    public string itemName;
+    public InventoryItem inventoryItem; // インスタンス参照（PlayerGrid由来のドラッグに使用）
+
     public bool fromInventory;
     public EquipmentSlot fromEquipmentSlot;
 
@@ -28,7 +29,7 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        Debug.Log("OnBeginDrag fromInventory�F" + fromInventory + " itemName�F" + itemName);
+        Debug.Log("OnBeginDrag fromInventory�F" + fromInventory + " itemName�F" + itemName);
         if (dragGhost == null) return;
 
         ghostImage = dragGhost.GetComponent<Image>();
@@ -57,6 +58,6 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (dragGhost != null)
             dragGhost.SetActive(false);
         canvasGroup.blocksRaycasts = true;
-        Debug.Log("OnEndDrag�Ă΂ꂽ");
+        Debug.Log("OnEndDrag�Ă΂ꂽ");
     }
 }

@@ -201,7 +201,6 @@ public class Gun : MonoBehaviour
         if (currentWeapon == null) return;
 
         currentAmmo--;
-        if (currentAmmo <= 0) magazineLoaded = false;
         Debug.Log("残弾：" + currentAmmo);
         hudManager?.UpdateAmmo(currentAmmo, currentWeapon.magazineSize);
 
@@ -255,7 +254,7 @@ public class Gun : MonoBehaviour
         yield return new WaitForSeconds(currentWeapon.reloadTime);
         if (currentWeapon == null) { isReloading = false; yield break; }
 
-        if (currentAmmo > 0)
+        if (magazineLoaded)
         {
             string magName = currentWeapon.weaponName + "Magazine";
             GameObject magPrefab = Resources.Load<GameObject>(magName);

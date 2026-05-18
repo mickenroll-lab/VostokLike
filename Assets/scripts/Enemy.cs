@@ -76,6 +76,16 @@ public class Enemy : MonoBehaviour
     void OnDeath()
     {
         EnemyAI ai = GetComponent<EnemyAI>();
+        int remainingAmmo = ai != null ? ai.GetRemainingAmmo() : 0;
+
+        LootContainer lootContainer = GetComponent<LootContainer>();
+        if (lootContainer != null)
+        {
+            lootContainer.SetGuaranteedWeapon("PMP", remainingAmmo);
+            int spareAmmo = ai != null ? ai.startAmmo : 8;
+            lootContainer.SetGuaranteedMagazine("PMPMagazine", spareAmmo);
+        }
+
         if (ai != null) ai.enabled = false;
 
         NavMeshAgent agent = GetComponent<NavMeshAgent>();

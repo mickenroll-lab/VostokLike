@@ -9,6 +9,10 @@ public class LootContainer : MonoBehaviour
 
     private Dictionary<string, int> contents = new Dictionary<string, int>();
     private bool isGenerated = false;
+    private string guaranteedWeapon = "";
+    private int guaranteedWeaponAmmo = 0;
+    private string guaranteedMagazine = "";
+    private int guaranteedMagazineAmmo = 0;
 
     public void Interact()
     {
@@ -42,6 +46,10 @@ public class LootContainer : MonoBehaviour
             return;
         }
         boxContainer.OpenContainer(contents, containerData.gridWidth, containerData.gridHeight, this);
+        if (guaranteedWeapon != "")
+            boxContainer.AddWeaponToBox(guaranteedWeapon, guaranteedWeaponAmmo);
+        if (guaranteedMagazine != "")
+            boxContainer.AddMagazineToBox(guaranteedMagazine, guaranteedMagazineAmmo);
     }
 
     void GenerateLoot()
@@ -78,15 +86,43 @@ public class LootContainer : MonoBehaviour
 
     public void RemoveFromContents(string itemName, int amount)
     {
+        if (itemName == guaranteedWeapon)
+        {
+            guaranteedWeapon = "";
+            guaranteedWeaponAmmo = 0;
+            return;
+        }
+        if (itemName == guaranteedMagazine)
+        {
+            guaranteedMagazine = "";
+            guaranteedMagazineAmmo = 0;
+            return;
+        }
         if (!contents.ContainsKey(itemName)) return;
         contents[itemName] -= amount;
         if (contents[itemName] <= 0)
             contents.Remove(itemName);
     }
 
+    public void SetGuaranteedWeapon(string weaponName, int ammo)
+    {
+        guaranteedWeapon = weaponName;
+        guaranteedWeaponAmmo = ammo;
+    }
+
+    public void SetGuaranteedMagazine(string magazineName, int ammo)
+    {
+        guaranteedMagazine = magazineName;
+        guaranteedMagazineAmmo = ammo;
+    }
+
     public void ResetContainer()
     {
         isGenerated = false;
         contents.Clear();
+        guaranteedWeapon = "";
+        guaranteedWeaponAmmo = 0;
+        guaranteedMagazine = "";
+        guaranteedMagazineAmmo = 0;
     }
 }

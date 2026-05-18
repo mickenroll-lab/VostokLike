@@ -79,6 +79,18 @@ public class BoxContainer : MonoBehaviour
             }
             boxInventoryItems.RemoveAll(i => i.itemName == itemName);
         }
+        else if (data != null && data.category == ItemCategory.Weapon)
+        {
+            int w = data.gridWidth;
+            int h = data.gridHeight;
+            List<InventoryItem> wpnItems = new List<InventoryItem>(boxInventoryItems.FindAll(i => i.itemName == itemName));
+            for (int i = 0; i < count; i++)
+            {
+                int ammo = i < wpnItems.Count ? wpnItems[i].ammo : 0;
+                playerInventory.AddItem(itemName, w, h, ammo);
+            }
+            boxInventoryItems.RemoveAll(i => i.itemName == itemName);
+        }
         else
         {
             for (int i = 0; i < count; i++)
@@ -208,6 +220,33 @@ public class BoxContainer : MonoBehaviour
         UpdateBoxUI();
     }
 
+    public void AddWeaponToBox(string itemName, int ammo)
+    {
+        if (boxContents.ContainsKey(itemName))
+            boxContents[itemName]++;
+        else
+            boxContents[itemName] = 1;
+
+        if (currentBox != null)
+        {
+            if (currentBox.contents.ContainsKey(itemName)) currentBox.contents[itemName]++;
+            else currentBox.contents[itemName] = 1;
+        }
+        if (currentStorageContainer != null)
+            currentStorageContainer.AddToContents(itemName, 1);
+        if (currentLootContainer != null)
+            currentLootContainer.SetGuaranteedWeapon(itemName, ammo);
+
+        GameObject prefab = Resources.Load<GameObject>(itemName);
+        ItemData data = prefab?.GetComponent<ItemData>();
+        int w = data?.gridWidth ?? 1;
+        int h = data?.gridHeight ?? 1;
+        InventoryItem weaponItem = new InventoryItem(itemName, 0, 0, w, h);
+        weaponItem.ammo = ammo;
+        boxInventoryItems.Add(weaponItem);
+        UpdateBoxUI();
+    }
+
     public void AddMagazineToBox(string itemName, int ammo)
     {
         if (boxContents.ContainsKey(itemName))
@@ -223,9 +262,31 @@ public class BoxContainer : MonoBehaviour
         }
         if (currentStorageContainer != null)
             currentStorageContainer.AddToContents(itemName, 1);
+        if (currentLootContainer != null)
+            currentLootContainer.SetGuaranteedMagazine(itemName, ammo);
         InventoryItem magItem = new InventoryItem(itemName, 0, 0, 1, 2);
         magItem.ammo = ammo;
         boxInventoryItems.Add(magItem);
+        UpdateBoxUI();
+    }
+
+    // インスタンス参照で1つだけ削除する（複数の同名アイテムを個別識別するため）
+    public void RemoveInventoryItemFromBox(InventoryItem item)
+    {
+        string itemName = item.itemName;
+        if (!boxContents.ContainsKey(itemName)) return;
+        boxContents[itemName]--;
+        if (boxContents[itemName] <= 0) boxContents.Remove(itemName);
+
+        if (currentBox != null && currentBox.contents.ContainsKey(itemName))
+        {
+            currentBox.contents[itemName]--;
+            if (currentBox.contents[itemName] <= 0) currentBox.contents.Remove(itemName);
+        }
+        if (currentLootContainer != null) currentLootContainer.RemoveFromContents(itemName, 1);
+        if (currentStorageContainer != null) currentStorageContainer.RemoveFromContents(itemName, 1);
+
+        boxInventoryItems.Remove(item);
         UpdateBoxUI();
     }
 
@@ -440,13 +501,16 @@ public class BoxContainer : MonoBehaviour
                     {
                         GameObject p = Resources.Load<GameObject>(captured);
                         ItemData d = p?.GetComponent<ItemData>();
-                        if (d != null && d.category == ItemCategory.Magazine && capturedSource != null && weaponSlot?.gun != null)
+                        if (d != null && d.category == ItemCategory.Magazine)
                         {
-                            // BoxGridのマガジンをインベントリに移してリロード開始
+                            bool hasAmmo = capturedSource != null && capturedSource.ammo > 0;
                             MoveOneItemToPlayer(captured, capturedSource);
-                            InventoryItem newMag = weaponSlot.gun.inventory.FindMagazine(captured);
-                            if (newMag != null)
-                                weaponSlot.gun.ReloadWith(newMag);
+                            if (hasAmmo && weaponSlot?.gun != null)
+                            {
+                                InventoryItem newMag = playerInventory.FindMagazine(captured);
+                                if (newMag != null)
+                                    weaponSlot.gun.ReloadWith(newMag);
+                            }
                         }
                         else
                             PrimaryAction(captured);
@@ -475,6 +539,7 @@ public class BoxContainer : MonoBehaviour
 
                 DraggableItem draggable = cell.AddComponent<DraggableItem>();
                 draggable.itemName = itemName;
+                draggable.inventoryItem = capturedSource; // BoxGrid由来のインスタンス参照（複数の同名アイテムを個別識別するため）
                 draggable.fromInventory = false;
                 draggable.inventory = playerInventory;
                 draggable.boxContainer = this;
@@ -489,10 +554,12 @@ public class BoxContainer : MonoBehaviour
                     if (wData != null && wData.category == ItemCategory.Weapon)
                     {
                         AmmoDisplay ammoDisplay = cell.AddComponent<AmmoDisplay>();
-                        string equipped = weaponSlot?.GetEquippedItem() ?? "";
-                        Gun gun = weaponSlot?.gun;
-                        if (equipped == itemName && gun != null)
-                            ammoDisplay.Show(gun.GetCurrentAmmo(), gun.GetMagazineSize());
+                        if (capturedSource != null)
+                        {
+                            WeaponData wd = Resources.Load<GameObject>(itemName)?.GetComponent<WeaponData>();
+                            int maxAmmo = wd != null ? wd.magazineSize : 8;
+                            ammoDisplay.Show(capturedSource.ammo, maxAmmo);
+                        }
 
                         // 右クリック：マガジン取り出し
                         EventTrigger.Entry rightClickEntry = new EventTrigger.Entry();
@@ -550,8 +617,8 @@ public class BoxContainer : MonoBehaviour
                 int itemW = data != null ? data.gridWidth : 1;
                 int itemH = data != null ? data.gridHeight : 1;
 
-                // マガジンはammoを引き継いでMoveOneItemToPlayerへ
-                if (data != null && data.category == ItemCategory.Magazine)
+                // マガジン・武器はammoを引き継いでMoveOneItemToPlayerへ
+                if (data != null && (data.category == ItemCategory.Magazine || data.category == ItemCategory.Weapon))
                 {
                     MoveOneItemToPlayer(itemName, sourceItem);
                     return;
