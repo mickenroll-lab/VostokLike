@@ -25,3 +25,11 @@ MonoBehaviour:
     minAmount: 1
     maxAmount: 1
     chance: 5
+  - itemName: MedKit
+    minAmount: 1
+    maxAmount: 1
+    chance: 5
+  - itemName: PMPMagazine
+    minAmount: 3
+    maxAmount: 3
+    chance: 100

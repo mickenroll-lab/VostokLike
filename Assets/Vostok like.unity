@@ -27754,6 +27754,9 @@ MonoBehaviour:
   value: 0
   gridWidth: 1
   gridHeight: 1
+  maxAmmo: 0
+  compatibleWeapon: 
+  compatibleBullet: 
 --- !u!1 &672827478
 GameObject:
   m_ObjectHideFlags: 0
@@ -65306,9 +65309,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 5
   sprintSpeed: 15
-  jumpHeight: 1.5
+  jumpHeight: 3
   controller: {fileID: 6852064261690986422}
-  gravity: -4
+  gravity: -25
   yVelocity: 0
   animator: {fileID: 5794894658495420396}
 --- !u!1 &2596825453272459995
@@ -65819,13 +65822,15 @@ MonoBehaviour:
   staminaRecoveryRate: 10
   currentItem: 
   hp: 1000
-  hpMax: 100
+  hpMax: 1000
   deathPanel: {fileID: 736564019}
   damageVignette: {fileID: 1903954193}
   mentalText: {fileID: 2114935957}
   playerCamera: {fileID: 1919030237984001321}
   isDead: 0
   sleepBuffActive: 0
+  hpMaxBase: 100
+  staminaMaxBase: 100
 --- !u!4 &4114711995860845501
 Transform:
   m_ObjectHideFlags: 0
@@ -66422,7 +66427,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: ef6403663453e6a4cb106814a81e72b4, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
@@ -66811,11 +66816,11 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 2
+  m_Height: 1.8
   m_Radius: 0.5
   m_SlopeLimit: 45
-  m_StepOffset: 0.5
-  m_SkinWidth: 0.08
+  m_StepOffset: 0.4
+  m_SkinWidth: 0.1
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: -0.02, z: 0}
 --- !u!1 &6868595566830673087
